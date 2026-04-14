@@ -58,6 +58,9 @@ curl -sS "https://YOUR_PORTAL.bitrix24.ru/rest/1/SECRET/profile.json"
 
 - `.env` — локальные значения (не коммитить).
 - `.env.example` — шаблон имён переменных без секретов.
+- `.cursor/rules/*.mdc` — правила Cursor для этого репозитория (поток ТЗ → YAML → sync, без секретов в коде).
+
+Репозиторий: [github.com/neetrino/Bitrix24-Task](https://github.com/neetrino/Bitrix24-Task).
 
 ## План в YAML → проверка → заливка в Bitrix (вариант 1)
 
