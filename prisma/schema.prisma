@@ -60,6 +60,8 @@ model Project {
   name             String
   slug             String   @unique
   ownerId          String
+  /// When null, chat uses OPENAI_CHAT_MODEL from env (fallback: gpt-4o-mini).
+  openaiChatModel  String?
   bitrixProjectId  String?
   taskOwnerId      String?
   taskAssigneeId   String?

@@ -19,9 +19,12 @@ function SubmitChat() {
 export function ChatPanel({
   projectId,
   phaseId,
+  activeModel,
 }: {
   projectId: string;
   phaseId: string | null;
+  /** Effective model id used for API calls (env or project override). */
+  activeModel: string;
 }) {
   const [state, formAction] = useFormState(
     sendChatMessage.bind(null, projectId, phaseId),
@@ -29,6 +32,9 @@ export function ChatPanel({
   );
   return (
     <form action={formAction} className="flex flex-col gap-3">
+      <p className="text-xs text-slate-500">
+        Model: <span className="font-mono text-slate-700">{activeModel}</span>
+      </p>
       <label className="text-sm font-medium text-slate-700" htmlFor="message">
         Message
       </label>

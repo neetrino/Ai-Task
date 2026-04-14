@@ -7,6 +7,7 @@ import { planSchema, type PlanPayload } from '@/shared/domain/plan';
 import { getOpenAI } from '@/shared/lib/openai';
 import { logger } from '@/shared/lib/logger';
 import { prisma } from '@/shared/lib/prisma';
+import { getEffectiveChatModel } from '@/shared/lib/openai-model';
 import { enforceRateLimit } from '@/shared/lib/rate-limit';
 import { requireSessionUserId } from '@/shared/lib/session';
 
@@ -85,10 +86,12 @@ export async function sendChatMessage(
     })),
   ];
 
+  const model = getEffectiveChatModel(project);
+
   let rawJson: unknown;
   try {
     const completion = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model,
       response_format: { type: 'json_object' },
       messages,
     });

@@ -6,7 +6,9 @@ import { BitrixSettingsForm } from '@/features/projects/BitrixSettingsForm';
 import { getProjectForUser } from '@/features/projects/project-queries';
 import { PhaseSection } from '@/features/phases/PhaseSection';
 import { PlanEditor } from '@/features/plan-editor/PlanEditor';
+import { ChatModelForm } from '@/features/projects/ChatModelForm';
 import { DEFAULT_PLAN, parsePlanFromJson, type PlanPayload } from '@/shared/domain/plan';
+import { getEffectiveChatModel, getEnvDefaultChatModel } from '@/shared/lib/openai-model';
 import { prisma } from '@/shared/lib/prisma';
 import { requireSessionUserId } from '@/shared/lib/session';
 
@@ -61,6 +63,9 @@ export default async function ProjectPage({
 
   const plan = resolvePlanPayload(snapshot?.payload ?? null);
 
+  const envDefaultModel = getEnvDefaultChatModel();
+  const effectiveChatModel = getEffectiveChatModel(project);
+
   const exportMd = activePhaseId
     ? `/api/projects/${project.slug}/export?format=md&phase=${activePhaseId}`
     : `/api/projects/${project.slug}/export?format=md`;
@@ -88,6 +93,17 @@ export default async function ProjectPage({
         projectId={project.id}
         projectSlug={project.slug}
       />
+
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold">AI model</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Override the OpenAI chat model for this project, or use the value from{' '}
+          <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">OPENAI_CHAT_MODEL</code>.
+        </p>
+        <div className="mt-4">
+          <ChatModelForm envDefaultLabel={envDefaultModel} project={project} />
+        </div>
+      </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Bitrix settings</h2>
@@ -143,7 +159,11 @@ export default async function ProjectPage({
               ))
             )}
           </ul>
-          <ChatPanel phaseId={activePhaseId} projectId={project.id} />
+          <ChatPanel
+            activeModel={effectiveChatModel}
+            phaseId={activePhaseId}
+            projectId={project.id}
+          />
         </div>
       </section>
 
