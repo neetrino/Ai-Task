@@ -1,8 +1,7 @@
 ---
 description: Поток ТЗ → Markdown → YAML → Bitrix24
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Bitrix24-Task — рабочий процесс
 
 ## Два этапа (обязательная последовательность)

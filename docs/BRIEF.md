@@ -1,54 +1,80 @@
-# Նախագծի տեխզադրանք
+# Product brief — PlanRelay
 
-> Լրացրու՛ այս ֆայլը զարգացումը սկսելուց առաջ։
-> Լրացնելուց հետո — ուղարկի՛ր AI-ասիստենտին անալիզի և մեկնարկի համար `21-project-onboarding.mdc`-ի համաձայն։
+**Product name (working).** PlanRelay  
+**Repository.** Bitrix24-Task (CLI sync + future web app)  
+**Last updated.** 2026-04-14
 
 ---
 
-## Նկարագրություն
+## Description
 
-[Ինչ նախագիծ է, 2–3 նախադասություն։ Ինչ խնդիր է լուծում։]
+PlanRelay is a team web application that combines **AI-assisted planning**, a structured **task list** compatible with existing Bitrix24 YAML sync, **per-project Bitrix settings**, **chat history**, **project phases** (e.g. “phase 2” continuation), **Markdown export** for developers, and **one-click (or server-triggered) sync** to Bitrix using a secured incoming webhook. It extends the current repo workflow (Markdown → YAML → Bitrix) with persistence, accounts, and a minimal modern UI on **Vercel**.
 
-## Թիրախային լսարան
+---
 
-[Ում համար է արտադրանքը։ Հիմնական օգտատիրոջ սցենարներ։]
+## Target audience
 
-## Հիմնական ֆունկցիաներ (առաջնայնացված)
+- **Product / engineering leads** who define scope and want tasks in Bitrix without manual copy-paste.
+- **Developers** who want a single **`.md`** file aligned with the same plan to work in VS Code.
 
-1. [Ֆունկցիա] — առաջնայնություն. բարձր
-2. [Ֆունկցիա] — առաջնայնություն. միջին
-3. [Ֆունկցիա] — առաջնայնություն. ցածր
+---
 
-## Stack (եթե որոշված է)
+## Priority features
 
-- **Տարբերակ A** — fullstack Next.js Vercel-ում
-- **Տարբերակ B** — Next.js frontend + NestJS backend (Render / Fly.io)
-- Եթե որոշված չէ — AI-ն կառաջարկի ֆունկցիաների հիման վրա
+1. **Auth + projects + phases + chat history** — high  
+2. **AI chat → validated plan (YAML-shaped)** — high  
+3. **Task list UI + edit/delete + AI revise** — high  
+4. **Per-project Bitrix IDs** (`Bitrix24_Project_id`, `Task_owner_id`, `Task_Assignee_id`) — high  
+5. **Markdown download** — high  
+6. **Bitrix sync** (reuse `sync-plan` logic) — high  
+7. **Webhook + OpenAI only in env** — high (security)  
+8. **YAML download / dry-run** — medium  
 
-## Դիզայն
+---
 
-- Figma. [հղում]
-- UI Kit / դիզայն-համակարգ. [եթե կա]
+## Stack (confirmed direction)
 
-## Ինտեգրացիաներ
+- **Frontend + API:** Next.js (App Router) on **Vercel**  
+- **Database:** **Neon** (PostgreSQL) + **Prisma**  
+- **Auth:** **Auth.js**  
+- **AI:** OpenAI (server-side only)  
+- **Bitrix:** existing incoming webhook + `src/sync-plan.ts` contract  
 
-- [ ] Վճարային համակարգ (Stripe / YooKassa / այլ)
-- [ ] Email  mailing (Resend / SendGrid / այլ)
-- [ ] Աուտենտիֆիկացիա (Auth.js / Clerk / այլ)
-- [ ] Ֆայլերի պահոց (Cloudflare R2 — լռելյայն)
-- [ ] Արտաքին API. [թվարկել]
+---
 
-## Կոնտենտի լեզու
+## Design
 
-- Ինտերֆեյսի հիմնական լեզու. [hy / en / բազմալեզու]
-- Պե՞տք է ինտերնացիոնալացում (i18n). այո / ոչ
+- **Minimal, modern** UI (Tailwind + shadcn/ui per TECH_CARD).  
+- No unnecessary chrome; focus on chat + task list + settings + export/sync.
 
-## Սահմանափակումներ
+---
 
-- Ժամկետներ. [ամսաթիվ կամ «առանց դեդլայնի»]
-- Բյուջե. [եթե կան սահմանափակումներ վճարովի սերվիսների համար]
-- Տեխնիկական. [եթե կան — օր. պարտադիր հոստինգ, legacy API]
+## Integrations
 
-## Լրացուցիչ
+- [x] Authentication (Auth.js)  
+- [x] AI (OpenAI API)  
+- [x] Bitrix24 (incoming webhook REST)  
+- [ ] Email for magic link (**Resend** or similar — TBD)  
+- [ ] Object storage — not required v1 (generated files streamed)  
 
-[Ցանկացած լրացուցիչ տեղեկություն, որը կարևոր է հաշվի առնել։]
+---
+
+## Content language
+
+- **UI:** English for v1 (team can add Russian later).  
+- **i18n:** not required for v1.  
+
+---
+
+## Constraints
+
+- **Hosting:** Vercel + Neon.  
+- **Secrets:** webhook and API keys must not appear in client-side code or logs.  
+- **Compliance:** follow Neon / OpenAI data processing terms for chat content.  
+
+---
+
+## Extra notes
+
+- CLI workflow (`npm run sync`, `plans/*.md` / `*.yaml`) remains valid for users who do not use the web UI.  
+- Product codename **PlanRelay** — relay plans to Bitrix and to developer Markdown.
