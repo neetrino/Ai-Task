@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { SyncToolbar } from '@/features/bitrix-sync/SyncToolbar';
 import { BitrixSettingsForm } from '@/features/projects/BitrixSettingsForm';
 import { WorkspaceModal } from '@/shared/ui/WorkspaceModal';
 import { WORKSPACE_BODY_CLASS } from '@/shared/ui/workspace-ui';
@@ -26,9 +27,11 @@ type ProjectForSettings = {
 
 export function ProjectBitrixSetupPanel({
   project,
+  activePhaseId,
   layout = 'toolbar',
 }: {
   project: ProjectForSettings;
+  activePhaseId: string | null;
   layout?: 'toolbar' | 'panel' | 'edge';
 }) {
   const [open, setOpen] = useState(false);
@@ -69,6 +72,15 @@ export function ProjectBitrixSetupPanel({
             only.
           </p>
           <BitrixSettingsForm project={project} />
+          <div className="border-t border-white/10 pt-4">
+            <p className={`${WORKSPACE_BODY_CLASS} text-sm`}>
+              After saving settings, run a dry-run to validate the webhook and plan (nothing is created in
+              Bitrix).
+            </p>
+            <div className="mt-3">
+              <SyncToolbar phaseId={activePhaseId} projectId={project.id} variant="dryRunOnly" />
+            </div>
+          </div>
         </div>
       </WorkspaceModal>
     </>

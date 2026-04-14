@@ -11,14 +11,19 @@ const COMPACT_GHOST =
 const COMPACT_PRIMARY =
   'rounded-lg bg-emerald-600 px-2 py-1 text-xs font-medium text-white transition hover:bg-emerald-500 disabled:opacity-60';
 
+/** full: both buttons; syncOnly: real sync only (All tasks); dryRunOnly: dry-run only (Bitrix settings modal). */
+export type SyncToolbarVariant = 'full' | 'syncOnly' | 'dryRunOnly';
+
 export function SyncToolbar({
   projectId,
   phaseId,
   compact = false,
+  variant = 'full',
 }: {
   projectId: string;
   phaseId: string | null;
   compact?: boolean;
+  variant?: SyncToolbarVariant;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
@@ -58,32 +63,41 @@ export function SyncToolbar({
     run(false);
   }
 
+  const showDryRun = variant === 'full' || variant === 'dryRunOnly';
+  const showRealSync = variant === 'full' || variant === 'syncOnly';
+
   return (
     <>
-      <BitrixSyncConfirmDialog
-        onCancel={cancelConfirm}
-        onConfirm={confirmRealSync}
-        open={confirmOpen}
-        pending={pending}
-      />
+      {showRealSync ? (
+        <BitrixSyncConfirmDialog
+          onCancel={cancelConfirm}
+          onConfirm={confirmRealSync}
+          open={confirmOpen}
+          pending={pending}
+        />
+      ) : null}
       <div className={compact ? 'flex flex-col gap-1' : 'flex flex-col gap-3'}>
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          <button
-            className={ghostClass}
-            disabled={pending}
-            onClick={() => run(true)}
-            type="button"
-          >
-            Dry-run sync
-          </button>
-          <button
-            className={primaryClass}
-            disabled={pending}
-            onClick={requestRealSync}
-            type="button"
-          >
-            {pending ? 'Syncing…' : 'Sync to Bitrix'}
-          </button>
+          {showDryRun ? (
+            <button
+              className={ghostClass}
+              disabled={pending}
+              onClick={() => run(true)}
+              type="button"
+            >
+              Dry-run sync
+            </button>
+          ) : null}
+          {showRealSync ? (
+            <button
+              className={primaryClass}
+              disabled={pending}
+              onClick={requestRealSync}
+              type="button"
+            >
+              {pending ? 'Syncing…' : 'Sync to Bitrix'}
+            </button>
+          ) : null}
         </div>
         {error ? (
           <p className={compact ? 'max-w-[14rem] text-[11px] text-red-400' : 'text-sm text-red-400'}>

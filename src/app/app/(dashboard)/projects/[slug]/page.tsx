@@ -72,7 +72,7 @@ export default async function ProjectPage({
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
       <div className="shrink-0">
-        <ProjectBitrixSetupPanel layout="edge" project={project} />
+        <ProjectBitrixSetupPanel activePhaseId={activePhaseId} layout="edge" project={project} />
       </div>
 
       <ProjectPlanTasksHost

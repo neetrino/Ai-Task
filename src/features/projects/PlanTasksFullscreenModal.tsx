@@ -106,16 +106,12 @@ export function PlanTasksFullscreenModal({
   useEffect(() => {
     if (!open) return;
     setPanelEntered(false);
-    let cancelled = false;
-    const outerId = requestAnimationFrame(() => {
+    const id = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (!cancelled) setPanelEntered(true);
+        setPanelEntered(true);
       });
     });
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(outerId);
-    };
+    return () => cancelAnimationFrame(id);
   }, [open]);
 
   if (!mounted || !open) return null;
@@ -169,7 +165,7 @@ export function PlanTasksFullscreenModal({
               />
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:min-w-0 sm:justify-end">
-              <SyncToolbar compact phaseId={phaseId} projectId={projectId} />
+              <SyncToolbar compact phaseId={phaseId} projectId={projectId} variant="syncOnly" />
               <a
                 className={`inline-flex shrink-0 items-center justify-center ${WORKSPACE_GHOST_BTN_CLASS} px-2 py-1 text-xs`}
                 download
