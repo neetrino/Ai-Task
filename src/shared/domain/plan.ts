@@ -7,12 +7,18 @@ export const decompositionLevelSchema = z.enum(['coarse', 'balanced', 'fine']);
 
 export type DecompositionLevel = z.infer<typeof decompositionLevelSchema>;
 
-/** Expected total task count range for each level (guidance for the model and UI). */
-export const DECOMPOSITION_LEVEL_RANGES: Record<DecompositionLevel, string> = {
-  coarse: '~20–30 tasks — major areas (e.g. account, admin, checkout)',
-  balanced: '~50–60 tasks — by modules and main flows',
-  fine: '~100–120 tasks — maximum breakdown of work items',
+/** What each level *means* (depth), without implying a universal number of tasks. */
+export const DECOMPOSITION_LEVEL_DESCRIPTIONS: Record<DecompositionLevel, string> = {
+  coarse:
+    'Fewer, larger chunks — main areas or milestones only (depth is shallow; total tasks scales with project size).',
+  balanced:
+    'Middle depth — modules and main flows broken down; more tasks than coarse, not every micro-step.',
+  fine:
+    'Deepest split — many small actionable tasks; total count still depends on how big the scope is.',
 };
+
+/** @deprecated Use DECOMPOSITION_LEVEL_DESCRIPTIONS; alias for existing imports. */
+export const DECOMPOSITION_LEVEL_RANGES = DECOMPOSITION_LEVEL_DESCRIPTIONS;
 
 export const taskSizeSchema = z.enum(['small', 'medium', 'large']);
 
@@ -31,8 +37,10 @@ export const epicSpecSchema = z.object({
 export const planSchema = z.object({
   project_title: z.string().optional(),
   epic_mode: epicModeSchema,
-  /** Set when the user chose how deep to decompose; drives total task count. */
+  /** Relative depth of decomposition; absolute task counts depend on scope (see decomposition_estimate_note). */
   decomposition_level: decompositionLevelSchema.optional(),
+  /** AI/user-facing note: expected task count band for *this* scope at the chosen level (not fixed globally). */
+  decomposition_estimate_note: z.string().max(600).optional(),
   responsible_id: z.number().optional(),
   epics: z.array(epicSpecSchema).min(1),
 });
@@ -51,6 +59,14 @@ function parseTaskSize(raw: unknown): 'small' | 'medium' | 'large' | undefined {
 function parseDecompositionLevel(raw: unknown): DecompositionLevel | undefined {
   if (raw === 'coarse' || raw === 'balanced' || raw === 'fine') return raw;
   return undefined;
+}
+
+function parseDecompositionEstimateNote(
+  raw: unknown,
+  prior: string | undefined,
+): string | undefined {
+  if (typeof raw === 'string' && raw.trim()) return raw.trim().slice(0, 600);
+  return prior;
 }
 
 function isValidPriorEpics(prior: PlanPayload | undefined): prior is PlanPayload {
@@ -75,6 +91,7 @@ export function normalizePlanFromAi(planRaw: unknown, prior: PlanPayload | undef
     return planSchema.parse({
       epic_mode: 'scrum',
       decomposition_level: prior?.decomposition_level,
+      decomposition_estimate_note: prior?.decomposition_estimate_note,
       epics: fallbackEpics,
     });
   }
@@ -83,6 +100,10 @@ export function normalizePlanFromAi(planRaw: unknown, prior: PlanPayload | undef
   const epic_mode = o.epic_mode === 'parent_tasks' ? 'parent_tasks' : 'scrum';
   const decomposition_level =
     parseDecompositionLevel(o.decomposition_level) ?? prior?.decomposition_level;
+  const decomposition_estimate_note = parseDecompositionEstimateNote(
+    o.decomposition_estimate_note,
+    prior?.decomposition_estimate_note,
+  );
 
   const project_title =
     typeof o.project_title === 'string' && o.project_title.trim() ? o.project_title.trim() : undefined;
@@ -97,6 +118,7 @@ export function normalizePlanFromAi(planRaw: unknown, prior: PlanPayload | undef
       project_title,
       responsible_id,
       decomposition_level,
+      decomposition_estimate_note,
       epics: fallbackEpics,
     });
   }
@@ -145,6 +167,7 @@ export function normalizePlanFromAi(planRaw: unknown, prior: PlanPayload | undef
     project_title,
     responsible_id,
     decomposition_level,
+    decomposition_estimate_note,
     epics,
   });
 }

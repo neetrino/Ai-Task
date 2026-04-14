@@ -1,5 +1,5 @@
 import {
-  DECOMPOSITION_LEVEL_RANGES,
+  DECOMPOSITION_LEVEL_DESCRIPTIONS,
   type PlanPayload,
 } from '@/shared/domain/plan';
 import { SparklesGlyph } from '@/shared/ui/brand-icons';
@@ -19,14 +19,19 @@ export function PlanTasksPanel({ plan }: { plan: PlanPayload }) {
           <p className="mt-1 text-xs text-slate-500">Structured tasks from the latest snapshot</p>
         )}
         {plan.decomposition_level ? (
-          <p className="mt-1 text-xs leading-snug text-slate-400" title="How finely the backlog was split">
-            <span className="font-medium text-slate-300">Decomposition:</span>{' '}
-            {plan.decomposition_level} — {DECOMPOSITION_LEVEL_RANGES[plan.decomposition_level]}
-          </p>
+          <div className="mt-1 space-y-1 text-xs leading-snug text-slate-400">
+            <p title="Relative depth; task counts scale with project size">
+              <span className="font-medium text-slate-300">Decomposition:</span>{' '}
+              {plan.decomposition_level} — {DECOMPOSITION_LEVEL_DESCRIPTIONS[plan.decomposition_level]}
+            </p>
+            {plan.decomposition_estimate_note ? (
+              <p className="text-slate-500">{plan.decomposition_estimate_note}</p>
+            ) : null}
+          </div>
         ) : (
           <p className="mt-1 text-xs text-slate-500">
-            No decomposition level yet — the assistant should ask coarse / balanced / fine before a full
-            breakdown.
+            No decomposition level yet — the assistant should ask coarse / balanced / fine (with
+            scope-specific estimates) before a full breakdown.
           </p>
         )}
       </div>

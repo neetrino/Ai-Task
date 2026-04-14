@@ -16,6 +16,7 @@ export type Plan = {
   epic_mode: 'scrum' | 'parent_tasks';
   responsible_id?: number;
   decomposition_level?: 'coarse' | 'balanced' | 'fine';
+  decomposition_estimate_note?: string;
   epics: EpicSpec[];
 };
 

@@ -74,11 +74,18 @@ export function parsePlan(raw: unknown): Plan {
   ) {
     throw new Error('decomposition_level must be coarse, balanced, or fine');
   }
+  const decomposition_estimate_note = raw.decomposition_estimate_note;
+  if (decomposition_estimate_note !== undefined && typeof decomposition_estimate_note !== 'string') {
+    throw new Error('decomposition_estimate_note must be a string');
+  }
   return {
     project_title: project_title?.trim(),
     epic_mode: mode,
     responsible_id,
     ...(decomposition_level !== undefined ? { decomposition_level } : {}),
+    ...(decomposition_estimate_note !== undefined && decomposition_estimate_note.trim() !== ''
+      ? { decomposition_estimate_note: decomposition_estimate_note.trim() }
+      : {}),
     epics,
   };
 }

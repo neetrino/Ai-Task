@@ -1,4 +1,4 @@
-import { DECOMPOSITION_LEVEL_RANGES, type PlanPayload } from '@/shared/domain/plan';
+import { DECOMPOSITION_LEVEL_DESCRIPTIONS, type PlanPayload } from '@/shared/domain/plan';
 
 export function planToMarkdown(plan: PlanPayload, fileTitle: string): string {
   const lines: string[] = [`# ${fileTitle}`, ''];
@@ -8,9 +8,12 @@ export function planToMarkdown(plan: PlanPayload, fileTitle: string): string {
   lines.push(`**Mode:** ${plan.epic_mode}`, '');
   if (plan.decomposition_level) {
     lines.push(
-      `**Decomposition:** ${plan.decomposition_level} — ${DECOMPOSITION_LEVEL_RANGES[plan.decomposition_level]}`,
+      `**Decomposition:** ${plan.decomposition_level} — ${DECOMPOSITION_LEVEL_DESCRIPTIONS[plan.decomposition_level]}`,
       '',
     );
+    if (plan.decomposition_estimate_note) {
+      lines.push(`**Estimate (this scope):** ${plan.decomposition_estimate_note}`, '');
+    }
   }
   for (const epic of plan.epics) {
     lines.push(`## ${epic.name}`, '');
