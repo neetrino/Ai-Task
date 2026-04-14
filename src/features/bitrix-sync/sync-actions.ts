@@ -42,6 +42,13 @@ export async function syncProjectToBitrix(
     return { error: 'Fill Bitrix project id, task owner, and assignee in project settings' };
   }
 
+  if (!dryRun && project.bitrixSyncCompleted) {
+    return {
+      error:
+        'This project was already synced to Bitrix. Uncheck «Sync already completed» above the sync buttons, then try again.',
+    };
+  }
+
   const snapshot = await prisma.planSnapshot.findFirst({
     where: { projectId, phaseId },
     orderBy: { updatedAt: 'desc' },
@@ -70,6 +77,13 @@ export async function syncProjectToBitrix(
     const msg = e instanceof Error ? e.message : 'Sync failed';
     logger.error({ err: e, projectId }, 'Bitrix sync failed');
     return { error: msg };
+  }
+
+  if (!dryRun) {
+    await prisma.project.update({
+      where: { id: projectId },
+      data: { bitrixSyncCompleted: true },
+    });
   }
 
   revalidatePath(`/app/projects/${project.slug}`);

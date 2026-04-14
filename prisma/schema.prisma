@@ -72,6 +72,8 @@ model Project {
   bitrixProjectId  String?
   taskOwnerId      String?
   taskAssigneeId   String?
+  /// When true, real (non–dry-run) Bitrix sync is blocked until the user clears the checkbox in the Bitrix panel.
+  bitrixSyncCompleted Boolean @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

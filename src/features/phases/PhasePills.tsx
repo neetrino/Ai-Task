@@ -4,11 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { Phase } from '@prisma/client';
 import { PhaseCreateForm } from '@/features/phases/PhaseCreateForm';
-import {
-  WORKSPACE_BODY_CLASS,
-  WORKSPACE_PHASE_ACTIVE_CLASS,
-  WORKSPACE_PHASE_IDLE_CLASS,
-} from '@/shared/ui/workspace-ui';
+import { WORKSPACE_PHASE_ACTIVE_CLASS, WORKSPACE_PHASE_IDLE_CLASS } from '@/shared/ui/workspace-ui';
 
 export function PhasePills({
   projectId,
@@ -25,8 +21,9 @@ export function PhasePills({
 
   return (
     <div>
-      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Phase</p>
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="mb-1.5 flex flex-wrap items-center gap-2">
+        <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500">Phase</span>
+        <div className="flex flex-wrap items-center gap-1.5">
         <Link
           className={
             activePhaseId === null ? WORKSPACE_PHASE_ACTIVE_CLASS : WORKSPACE_PHASE_IDLE_CLASS
@@ -49,15 +46,16 @@ export function PhasePills({
         <button
           aria-expanded={addOpen}
           aria-label={addOpen ? 'Close add phase' : 'Add phase'}
-          className={`flex h-8 min-w-[2rem] items-center justify-center px-2 font-semibold leading-none ${WORKSPACE_PHASE_IDLE_CLASS}`}
+          className={`flex h-7 min-w-[1.75rem] items-center justify-center px-1.5 text-sm font-semibold leading-none ${WORKSPACE_PHASE_IDLE_CLASS}`}
           onClick={() => setAddOpen((v) => !v)}
           type="button"
         >
           +
         </button>
+        </div>
       </div>
       {addOpen ? (
-        <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/50 p-3">
+        <div className="mt-2 rounded-lg border border-white/10 bg-slate-950/50 p-2">
           <PhaseCreateForm
             onSuccess={() => setAddOpen(false)}
             projectId={projectId}
@@ -65,9 +63,6 @@ export function PhasePills({
           />
         </div>
       ) : null}
-      <p className={`mt-2 ${WORKSPACE_BODY_CLASS} text-xs`}>
-        Chat and plan are scoped to this phase.
-      </p>
     </div>
   );
 }

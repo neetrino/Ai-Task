@@ -68,6 +68,25 @@ export async function updateProjectBitrix(projectId: string, formData: FormData)
   revalidatePath(`/app/projects/${project.slug}`);
 }
 
+export async function setBitrixSyncCompleted(
+  projectId: string,
+  completed: boolean,
+): Promise<void> {
+  const userId = await requireActiveUserId();
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, ownerId: userId },
+  });
+  if (!project) {
+    logger.warn({ projectId }, 'setBitrixSyncCompleted: project not found');
+    return;
+  }
+  await prisma.project.update({
+    where: { id: projectId },
+    data: { bitrixSyncCompleted: completed },
+  });
+  revalidatePath(`/app/projects/${project.slug}`);
+}
+
 function emptyToNull(v: FormDataEntryValue | null): string | null | undefined {
   if (v === null || v === undefined) return undefined;
   if (typeof v !== 'string') return undefined;
