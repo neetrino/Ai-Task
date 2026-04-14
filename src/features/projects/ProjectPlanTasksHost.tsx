@@ -82,6 +82,12 @@ export function ProjectPlanTasksHost({
   const effectivePlan = modalPlan ?? plan;
   const effectivePhaseId = modalPhaseId;
 
+  const exportMarkdownHref = useMemo(() => {
+    return modalPhaseId
+      ? `/api/projects/${encodeURIComponent(projectSlug)}/export?phase=${encodeURIComponent(modalPhaseId)}`
+      : `/api/projects/${encodeURIComponent(projectSlug)}/export`;
+  }, [modalPhaseId, projectSlug]);
+
   const cachePlanForCurrentModal = useCallback(
     (payload: PlanPayload) => {
       const key = phaseCacheKey(effectivePhaseId);
@@ -266,6 +272,7 @@ export function ProjectPlanTasksHost({
         draftDescription={draftDescription}
         draftTitle={draftTitle}
         editing={editing}
+        exportMarkdownHref={exportMarkdownHref}
         fetchError={fetchError}
         onBeginEdit={beginEdit}
         onCancelEdit={cancelEdit}
@@ -276,10 +283,12 @@ export function ProjectPlanTasksHost({
         onSearchChange={setSearch}
         onToggleSync={toggleRowBitrixSync}
         open={modalOpen}
-        savePending={savePending}
+        phaseId={modalPhaseId}
         plan={effectivePlan}
         planLoading={planLoading}
+        projectId={projectId}
         saveNote={saveNote}
+        savePending={savePending}
         search={search}
         syncNote={syncNote}
       />

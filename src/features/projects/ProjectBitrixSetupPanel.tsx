@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { SyncToolbar } from '@/features/bitrix-sync/SyncToolbar';
 import { BitrixSettingsForm } from '@/features/projects/BitrixSettingsForm';
 import { WorkspaceModal } from '@/shared/ui/WorkspaceModal';
-import { WORKSPACE_BODY_CLASS, WORKSPACE_GHOST_BTN_CLASS } from '@/shared/ui/workspace-ui';
+import { WORKSPACE_BODY_CLASS } from '@/shared/ui/workspace-ui';
 
 /** Compact actions in the project header toolbar */
 const TOOLBAR_TRIGGER_BTN_CLASS =
@@ -27,21 +26,15 @@ type ProjectForSettings = {
 
 export function ProjectBitrixSetupPanel({
   project,
-  exportMd,
-  exportYaml,
-  activePhaseId,
   layout = 'toolbar',
 }: {
   project: ProjectForSettings;
-  exportMd: string;
-  exportYaml: string;
-  activePhaseId: string | null;
   layout?: 'toolbar' | 'panel' | 'edge';
 }) {
-  const [open, setOpen] = useState<'bitrix' | 'export' | null>(null);
+  const [open, setOpen] = useState(false);
 
   function close() {
-    setOpen(null);
+    setOpen(false);
   }
 
   const triggerClass =
@@ -55,62 +48,27 @@ export function ProjectBitrixSetupPanel({
       ? 'pointer-events-none fixed right-3 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-2 max-lg:bottom-28 max-lg:top-auto max-lg:translate-y-0 sm:right-4'
       : layout === 'toolbar'
         ? 'flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:pt-0.5'
-        : 'mt-2 grid grid-cols-2 gap-2';
+        : 'mt-2';
 
   return (
     <>
       <div className={triggerWrapClass}>
         <button
           className={`${triggerClass} pointer-events-auto`}
-          onClick={() => setOpen('bitrix')}
+          onClick={() => setOpen(true)}
           type="button"
         >
           Bitrix24
         </button>
-        <button
-          className={`${triggerClass} pointer-events-auto`}
-          onClick={() => setOpen('export')}
-          type="button"
-        >
-          Export
-        </button>
       </div>
 
-      <WorkspaceModal onClose={close} open={open === 'bitrix'} title="Bitrix24">
+      <WorkspaceModal onClose={close} open={open} title="Bitrix24">
         <div className="space-y-4">
           <p className={`${WORKSPACE_BODY_CLASS} text-sm leading-relaxed`}>
             Webhook URL is set in the server environment. The values below are saved for this project
             only.
           </p>
           <BitrixSettingsForm project={project} />
-          <div className="border-t border-white/10 pt-4">
-            <p className={`${WORKSPACE_BODY_CLASS} text-sm`}>Push tasks to Bitrix (uses webhook).</p>
-            <div className="mt-3">
-              <SyncToolbar phaseId={activePhaseId} projectId={project.id} />
-            </div>
-          </div>
-        </div>
-      </WorkspaceModal>
-
-      <WorkspaceModal onClose={close} open={open === 'export'} title="Export plan">
-        <div className="space-y-4">
-          <p className={`${WORKSPACE_BODY_CLASS} text-sm leading-relaxed`}>
-            Download the saved plan snapshot for this phase.
-          </p>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <a
-              className={`flex-1 ${WORKSPACE_GHOST_BTN_CLASS} text-center text-sm`}
-              href={exportMd}
-            >
-              Markdown
-            </a>
-            <a
-              className={`flex-1 ${WORKSPACE_GHOST_BTN_CLASS} text-center text-sm`}
-              href={exportYaml}
-            >
-              YAML
-            </a>
-          </div>
         </div>
       </WorkspaceModal>
     </>

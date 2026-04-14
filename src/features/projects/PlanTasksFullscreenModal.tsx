@@ -8,8 +8,9 @@ import {
   filterFlatPlanTasks,
   type FlatPlanTaskRow,
 } from '@/features/projects/plan-tasks-iterate';
+import { SyncToolbar } from '@/features/bitrix-sync/SyncToolbar';
 import { PlanTaskRowCard } from '@/features/projects/PlanTaskRowCard';
-import { WORKSPACE_FIELD_CLASS } from '@/shared/ui/workspace-ui';
+import { WORKSPACE_FIELD_CLASS, WORKSPACE_GHOST_BTN_CLASS } from '@/shared/ui/workspace-ui';
 
 type EditingTarget = { epicIndex: number; taskIndex: number };
 
@@ -36,10 +37,16 @@ export function PlanTasksFullscreenModal({
   syncNote,
   planLoading = false,
   fetchError = null,
+  projectId,
+  phaseId,
+  exportMarkdownHref,
 }: {
   open: boolean;
   onClose: () => void;
   plan: PlanPayload;
+  projectId: string;
+  phaseId: string | null;
+  exportMarkdownHref: string;
   title?: string;
   search: string;
   onSearchChange: (value: string) => void;
@@ -121,8 +128,8 @@ export function PlanTasksFullscreenModal({
               Close
             </button>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-            <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+            <div className="min-w-0 flex-1 sm:min-w-[12rem]">
               <label className="sr-only" htmlFor={searchId}>
                 Search tasks
               </label>
@@ -135,8 +142,18 @@ export function PlanTasksFullscreenModal({
                 value={search}
               />
             </div>
+            <div className="flex flex-wrap items-center gap-2 sm:min-w-0 sm:justify-end">
+              <SyncToolbar compact phaseId={phaseId} projectId={projectId} />
+              <a
+                className={`inline-flex shrink-0 items-center justify-center ${WORKSPACE_GHOST_BTN_CLASS} px-2 py-1 text-xs`}
+                download
+                href={exportMarkdownHref}
+              >
+                Markdown
+              </a>
+            </div>
             <div
-              className="flex shrink-0 rounded-lg border border-white/10 bg-slate-900/80 p-0.5"
+              className="flex shrink-0 rounded-lg border border-white/10 bg-slate-900/80 p-0.5 sm:ml-auto"
               role="group"
               aria-label="Task layout"
             >

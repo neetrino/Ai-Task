@@ -1,6 +1,4 @@
-import { stringify } from 'yaml';
 import { DEFAULT_PLAN, parsePlanFromJson } from '@/shared/domain/plan';
-import { planPayloadForYamlExport } from '@/shared/lib/plan-export';
 import { planToMarkdown } from '@/shared/lib/plan-markdown';
 import { prisma } from '@/shared/lib/prisma';
 import { requireActiveUserForApi } from '@/shared/lib/session';
@@ -24,7 +22,6 @@ export async function GET(
   }
 
   const url = new URL(req.url);
-  const format = url.searchParams.get('format') ?? 'md';
   const phaseParam = url.searchParams.get('phase');
 
   let phaseId: string | null = null;
@@ -48,16 +45,6 @@ export async function GET(
     plan = snapshot ? parsePlanFromJson(snapshot.payload) : DEFAULT_PLAN;
   } catch {
     plan = DEFAULT_PLAN;
-  }
-
-  if (format === 'yaml') {
-    const body = stringify(planPayloadForYamlExport(plan));
-    return new Response(body, {
-      headers: {
-        'Content-Type': 'text/yaml; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${project.slug}.plan.yaml"`,
-      },
-    });
   }
 
   const md = planToMarkdown(plan, project.name);

@@ -61,13 +61,6 @@ export default async function ProjectPage({
   const plan = resolvePlanPayload(snapshot?.payload ?? null);
   const effectiveChatModel = getEffectiveChatModel(project);
 
-  const exportMd = activePhaseId
-    ? `/api/projects/${project.slug}/export?format=md&phase=${activePhaseId}`
-    : `/api/projects/${project.slug}/export?format=md`;
-  const exportYaml = activePhaseId
-    ? `/api/projects/${project.slug}/export?format=yaml&phase=${activePhaseId}`
-    : `/api/projects/${project.slug}/export?format=yaml`;
-
   const chatLines = messages.map((m) => ({
     id: m.id,
     role: m.role,
@@ -79,13 +72,7 @@ export default async function ProjectPage({
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
       <div className="shrink-0">
-        <ProjectBitrixSetupPanel
-          activePhaseId={activePhaseId}
-          exportMd={exportMd}
-          exportYaml={exportYaml}
-          layout="edge"
-          project={project}
-        />
+        <ProjectBitrixSetupPanel layout="edge" project={project} />
       </div>
 
       <ProjectPlanTasksHost
