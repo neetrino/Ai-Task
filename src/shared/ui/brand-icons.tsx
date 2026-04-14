@@ -19,6 +19,27 @@ export function SparklesGlyph({ className }: { className?: string }) {
   );
 }
 
+/** Clipboard list — used for “Tasks” next to phase rows. */
+export function ListChecksGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v0M9 12h6m-6 4h4"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
 export function ArrowRightGlyph({ className }: { className?: string }) {
   return (
     <svg
