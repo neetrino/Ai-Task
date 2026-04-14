@@ -21,7 +21,7 @@ export function PhasePills({
 
   return (
     <div>
-      <div className="mb-1.5 flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500">Phase</span>
         <div className="flex flex-wrap items-center gap-1.5">
         <Link

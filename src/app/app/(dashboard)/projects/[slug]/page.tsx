@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import { ProjectChatSection } from '@/features/chat/ProjectChatSection';
-import { PhasePills } from '@/features/phases/PhasePills';
 import { PlanTasksPanel } from '@/features/projects/PlanTasksPanel';
 import { ProjectBitrixSetupPanel } from '@/features/projects/ProjectBitrixSetupPanel';
 import { getProjectForUser } from '@/features/projects/project-queries';
@@ -8,7 +7,6 @@ import { DEFAULT_PLAN, parsePlanFromJson, type PlanPayload } from '@/shared/doma
 import { getEffectiveChatModel } from '@/shared/lib/openai-model';
 import { prisma } from '@/shared/lib/prisma';
 import { requireActiveUserId } from '@/shared/lib/session';
-import { WORKSPACE_PANEL_CLASS } from '@/shared/ui/workspace-ui';
 
 function resolvePlanPayload(snapshotPayload: unknown | null): PlanPayload {
   if (!snapshotPayload) return DEFAULT_PLAN;
@@ -76,29 +74,21 @@ export default async function ProjectPage({
   }));
 
   return (
-    <div className="flex min-h-0 flex-col gap-3">
-      <header className="flex min-w-0 shrink-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <header className="flex min-w-0 shrink-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <h1 className="min-w-0 max-w-full truncate text-2xl font-semibold tracking-tight text-white sm:text-3xl">
           {project.name}
         </h1>
+        <ProjectBitrixSetupPanel
+          activePhaseId={activePhaseId}
+          exportMd={exportMd}
+          exportYaml={exportYaml}
+          project={project}
+        />
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:h-[calc(100vh-8.75rem)] lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)] lg:gap-4 lg:overflow-hidden lg:-mx-6">
-        <aside className="order-2 flex min-h-0 flex-col gap-2 overflow-hidden lg:order-1 lg:pl-6">
-          <div className={`shrink-0 p-3 ${WORKSPACE_PANEL_CLASS}`}>
-            <PhasePills
-              activePhaseId={activePhaseId}
-              phases={phases}
-              projectId={project.id}
-              projectSlug={project.slug}
-            />
-            <ProjectBitrixSetupPanel
-              activePhaseId={activePhaseId}
-              exportMd={exportMd}
-              exportYaml={exportYaml}
-              project={project}
-            />
-          </div>
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)] lg:gap-4 lg:overflow-hidden lg:-mx-6">
+        <aside className="order-2 flex min-h-0 flex-col overflow-hidden lg:order-1 lg:pl-6">
           <div className="min-h-0 flex-1 overflow-hidden">
             <PlanTasksPanel plan={plan} />
           </div>
@@ -108,8 +98,10 @@ export default async function ProjectPage({
           <ProjectChatSection
             activeModel={effectiveChatModel}
             initialMessages={chatLines}
+            phases={phases}
             phaseId={activePhaseId}
             projectId={project.id}
+            projectSlug={project.slug}
           />
         </section>
       </div>
