@@ -15,6 +15,11 @@ export function isTaskSyncChecked(task: TaskPayload): boolean {
   return !task.bitrixSynced;
 }
 
+/** Total actionable tasks in the plan (for badges and summaries). */
+export function countPlanTasks(plan: PlanPayload): number {
+  return buildFlatPlanTasks(plan).length;
+}
+
 /** Linear order: epic order, then task order within each epic. Display numbers are 1…N for dashboard UI only. */
 export function buildFlatPlanTasks(plan: PlanPayload): FlatPlanTaskRow[] {
   let displayNumber = 0;

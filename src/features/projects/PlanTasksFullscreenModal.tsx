@@ -34,6 +34,8 @@ export function PlanTasksFullscreenModal({
   pending,
   saveNote,
   syncNote,
+  planLoading = false,
+  fetchError = null,
 }: {
   open: boolean;
   onClose: () => void;
@@ -55,12 +57,19 @@ export function PlanTasksFullscreenModal({
   pending: boolean;
   saveNote: string | null;
   syncNote: string | null;
+  planLoading?: boolean;
+  fetchError?: string | null;
 }) {
   const titleId = useId();
   const searchId = useId();
   const [mounted, setMounted] = useState(false);
   const rows = useMemo(() => buildFlatPlanTasks(plan), [plan]);
   const filtered = useMemo(() => filterFlatPlanTasks(rows, search), [rows, search]);
+  const taskPhaseHref = useMemo(() => {
+    const base = `/app/projects/${projectSlug}`;
+    const phaseQ = phaseId ? `?phase=${phaseId}` : '';
+    return `${base}${phaseQ}`;
+  }, [phaseId, projectSlug]);
 
   useEffect(() => {
     setMounted(true);
@@ -85,12 +94,6 @@ export function PlanTasksFullscreenModal({
   }, [open, onClose]);
 
   if (!mounted || !open) return null;
-
-  const taskHrefFor = (row: FlatPlanTaskRow) => {
-    const base = `/app/projects/${projectSlug}`;
-    const phaseQ = phaseId ? `?phase=${phaseId}` : '';
-    return `${base}${phaseQ}#task-${row.epicIndex}-${row.taskIndex}`;
-  };
 
   const content: ReactNode = (
     <div
@@ -139,33 +142,43 @@ export function PlanTasksFullscreenModal({
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
           {saveNote ? <p className="mb-2 text-xs text-red-400">{saveNote}</p> : null}
           {syncNote ? <p className="mb-2 text-xs text-red-400">{syncNote}</p> : null}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {filtered.map((row) => {
-              const isEditing =
-                editing?.epicIndex === row.epicIndex && editing?.taskIndex === row.taskIndex;
-              return (
-                <PlanTaskRowCard
-                  draftDescription={draftDescription}
-                  draftTitle={draftTitle}
-                  isEditing={isEditing}
-                  key={`${row.epicIndex}-${row.taskIndex}`}
-                  onBeginEdit={() => onBeginEdit(row)}
-                  onCancelEdit={onCancelEdit}
-                  onDraftDescriptionChange={onDraftDescriptionChange}
-                  onDraftTitleChange={onDraftTitleChange}
-                  onNavigateTask={onClose}
-                  onSaveEdit={onSaveEdit}
-                  onToggleSync={() => onToggleSync(row)}
-                  pending={pending}
-                  row={row}
-                  taskHref={taskHrefFor(row)}
-                  variant="grid"
-                />
-              );
-            })}
-          </div>
-          {filtered.length === 0 ? (
-            <p className="py-8 text-center text-xs text-slate-500">No tasks match your search.</p>
+          {planLoading ? (
+            <p className="py-12 text-center text-sm text-slate-400">Loading plan…</p>
+          ) : null}
+          {!planLoading && fetchError ? (
+            <p className="py-8 text-center text-sm text-red-400">{fetchError}</p>
+          ) : null}
+          {!planLoading && !fetchError ? (
+            <>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {filtered.map((row) => {
+                  const isEditing =
+                    editing?.epicIndex === row.epicIndex && editing?.taskIndex === row.taskIndex;
+                  return (
+                    <PlanTaskRowCard
+                      draftDescription={draftDescription}
+                      draftTitle={draftTitle}
+                      isEditing={isEditing}
+                      key={`${row.epicIndex}-${row.taskIndex}`}
+                      onBeginEdit={() => onBeginEdit(row)}
+                      onCancelEdit={onCancelEdit}
+                      onDraftDescriptionChange={onDraftDescriptionChange}
+                      onDraftTitleChange={onDraftTitleChange}
+                      onNavigateTask={onClose}
+                      onSaveEdit={onSaveEdit}
+                      onToggleSync={() => onToggleSync(row)}
+                      pending={pending}
+                      row={row}
+                      taskHref={taskPhaseHref}
+                      variant="grid"
+                    />
+                  );
+                })}
+              </div>
+              {filtered.length === 0 ? (
+                <p className="py-8 text-center text-xs text-slate-500">No tasks match your search.</p>
+              ) : null}
+            </>
           ) : null}
         </div>
       </div>

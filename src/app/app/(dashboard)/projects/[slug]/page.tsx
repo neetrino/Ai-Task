@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
 import { ProjectChatSection } from '@/features/chat/ProjectChatSection';
 import { PhaseSidebarNav } from '@/features/phases/PhaseSidebarNav';
+import { getPhaseTaskCounts } from '@/features/projects/phase-task-counts';
 import { PROJECT_TASKS_CHAT_GRID_CLASS } from '@/features/projects/plan-tasks-layout';
-import { PlanTasksPanel } from '@/features/projects/PlanTasksPanel';
+import { ProjectPlanTasksHost } from '@/features/projects/ProjectPlanTasksHost';
 import { ProjectPlanMeta } from '@/features/projects/ProjectPlanMeta';
 import { ProjectBitrixSetupPanel } from '@/features/projects/ProjectBitrixSetupPanel';
 import { getProjectForUser } from '@/features/projects/project-queries';
@@ -76,6 +77,8 @@ export default async function ProjectPage({
     content: m.content,
   }));
 
+  const taskCounts = await getPhaseTaskCounts(project.id, phases);
+
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
       <div className="shrink-0">
@@ -88,35 +91,34 @@ export default async function ProjectPage({
         />
       </div>
 
-      <div className={PROJECT_TASKS_CHAT_GRID_CLASS}>
-        <aside className="order-2 flex min-h-0 flex-col overflow-hidden lg:order-1 lg:border-r lg:border-white/10 lg:pl-6">
-          <ProjectPlanMeta plan={plan} projectName={project.name} />
-          <PhaseSidebarNav
-            activePhaseId={activePhaseId}
-            phases={phases}
-            projectId={project.id}
-            projectSlug={project.slug}
-          />
-          <div className="min-h-0 flex-1 overflow-hidden pt-1">
-            <PlanTasksPanel
+      <ProjectPlanTasksHost
+        activePhaseId={activePhaseId}
+        initialPlan={plan}
+        projectId={project.id}
+        projectSlug={project.slug}
+      >
+        <div className={PROJECT_TASKS_CHAT_GRID_CLASS}>
+          <aside className="order-2 flex min-h-0 flex-1 flex-col overflow-hidden lg:order-1 lg:border-r lg:border-white/10 lg:pl-6">
+            <ProjectPlanMeta plan={plan} projectName={project.name} />
+            <PhaseSidebarNav
               activePhaseId={activePhaseId}
-              plan={plan}
+              phases={phases}
               projectId={project.id}
               projectSlug={project.slug}
-              showPlanHeader={false}
+              taskCounts={taskCounts}
             />
-          </div>
-        </aside>
+          </aside>
 
-        <section className="order-1 flex min-h-0 flex-1 flex-col lg:order-2 lg:h-full lg:min-h-0 lg:pr-6">
-          <ProjectChatSection
-            activeModel={effectiveChatModel}
-            initialMessages={chatLines}
-            phaseId={activePhaseId}
-            projectId={project.id}
-          />
-        </section>
-      </div>
+          <section className="order-1 flex min-h-0 flex-1 flex-col lg:order-2 lg:h-full lg:min-h-0 lg:pr-6">
+            <ProjectChatSection
+              activeModel={effectiveChatModel}
+              initialMessages={chatLines}
+              phaseId={activePhaseId}
+              projectId={project.id}
+            />
+          </section>
+        </div>
+      </ProjectPlanTasksHost>
     </div>
   );
 }
