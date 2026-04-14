@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { revalidateProjectData } from '@/shared/lib/project-cache-tags';
 import { logger } from '@/shared/lib/logger';
 import { isAllowedChatModelId } from '@/shared/lib/openai-model';
 import { prisma } from '@/shared/lib/prisma';
@@ -31,4 +32,5 @@ export async function updateProjectChatModel(projectId: string, formData: FormDa
   });
   revalidatePath(`/app/projects/${project.slug}`);
   revalidatePath('/app/account');
+  revalidateProjectData(projectId);
 }

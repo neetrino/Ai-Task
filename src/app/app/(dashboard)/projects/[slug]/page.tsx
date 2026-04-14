@@ -1,7 +1,11 @@
 import { notFound } from 'next/navigation';
 import { ProjectChatSection } from '@/features/chat/ProjectChatSection';
 import { PhaseSidebarNav } from '@/features/phases/PhaseSidebarNav';
-import { getPhaseTaskCounts } from '@/features/projects/phase-task-counts';
+import {
+  getCachedPhaseMessages,
+  getCachedPhaseTaskCounts,
+  getCachedPlanSnapshot,
+} from '@/features/projects/cached-project-loaders';
 import { PROJECT_TASKS_CHAT_GRID_CLASS } from '@/features/projects/plan-tasks-layout';
 import { ProjectPlanTasksHost } from '@/features/projects/ProjectPlanTasksHost';
 import { ProjectPlanMeta } from '@/features/projects/ProjectPlanMeta';
@@ -50,15 +54,8 @@ export default async function ProjectPage({
   }
 
   const [messages, snapshot] = await Promise.all([
-    prisma.message.findMany({
-      where: { projectId: project.id, phaseId: activePhaseId },
-      orderBy: { createdAt: 'asc' },
-      take: 100,
-    }),
-    prisma.planSnapshot.findFirst({
-      where: { projectId: project.id, phaseId: activePhaseId },
-      orderBy: { updatedAt: 'desc' },
-    }),
+    getCachedPhaseMessages(project.id, activePhaseId),
+    getCachedPlanSnapshot(project.id, activePhaseId),
   ]);
 
   const plan = resolvePlanPayload(snapshot?.payload ?? null);
@@ -77,7 +74,7 @@ export default async function ProjectPage({
     content: m.content,
   }));
 
-  const taskCounts = await getPhaseTaskCounts(project.id, phases);
+  const taskCounts = await getCachedPhaseTaskCounts(project.id, phases);
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">

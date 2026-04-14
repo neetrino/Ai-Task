@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { revalidateProjectData } from '@/shared/lib/project-cache-tags';
 import { parsePlan } from '@/server/bitrix/parse-plan';
 import { runSyncPlan } from '@/server/bitrix/sync';
 import { countTasksMarkedForSync } from '@/server/bitrix/sync-task-selection';
@@ -91,6 +92,7 @@ export async function syncProjectToBitrix(
   }
 
   revalidatePath(`/app/projects/${project.slug}`);
+  revalidateProjectData(projectId);
   return {
     ok: true,
     message: dryRun

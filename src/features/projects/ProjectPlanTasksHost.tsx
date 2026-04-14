@@ -1,7 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, useTransition, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
 import type { PlanPayload } from '@/shared/domain/plan';
 import { savePlanSnapshot } from '@/features/plan-editor/plan-actions';
 import { setPlanTaskSyncSelected } from '@/features/bitrix-sync/plan-sync-actions';
@@ -34,7 +33,6 @@ export function ProjectPlanTasksHost({
   projectSlug: string;
   activePhaseId: string | null;
 }) {
-  const router = useRouter();
   const [plan, setPlan] = useState<PlanPayload>(initialPlan);
   const [modalPlan, setModalPlan] = useState<PlanPayload | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -49,12 +47,33 @@ export function ProjectPlanTasksHost({
   const [syncNote, setSyncNote] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  const planSyncKey = `${projectId}:${activePhaseId ?? 'main'}`;
+  const planSyncKeyRef = useRef<string | null>(null);
+
+  const phasePlanCacheRef = useRef<Map<string, PlanPayload>>(new Map());
+
+  const phaseCacheKey = useCallback(
+    (phaseId: string | null) => `${projectSlug}:${phaseId ?? 'main'}`,
+    [projectSlug],
+  );
+
   useEffect(() => {
-    setPlan(initialPlan);
-  }, [initialPlan]);
+    if (planSyncKeyRef.current !== planSyncKey) {
+      planSyncKeyRef.current = planSyncKey;
+      setPlan(initialPlan);
+    }
+  }, [planSyncKey, initialPlan]);
 
   const effectivePlan = modalPlan ?? plan;
   const effectivePhaseId = modalPhaseId;
+
+  const cachePlanForCurrentModal = useCallback(
+    (payload: PlanPayload) => {
+      const key = phaseCacheKey(effectivePhaseId);
+      phasePlanCacheRef.current.set(key, payload);
+    },
+    [effectivePhaseId, phaseCacheKey],
+  );
 
   const openTasksForPhase = useCallback(
     async (targetPhaseId: string | null) => {
@@ -73,6 +92,14 @@ export function ProjectPlanTasksHost({
         return;
       }
 
+      const cacheKey = phaseCacheKey(targetPhaseId);
+      const cached = phasePlanCacheRef.current.get(cacheKey);
+      if (cached) {
+        setModalPlan(cached);
+        setPlanLoading(false);
+        return;
+      }
+
       setPlanLoading(true);
       setModalPlan(null);
       try {
@@ -85,6 +112,7 @@ export function ProjectPlanTasksHost({
         }
         const data: { plan: PlanPayload } = await res.json();
         setModalPlan(data.plan);
+        phasePlanCacheRef.current.set(cacheKey, data.plan);
       } catch (e) {
         logger.error({ err: e }, 'project.plan.fetch');
         setFetchError(e instanceof Error ? e.message : 'Could not load plan');
@@ -92,7 +120,7 @@ export function ProjectPlanTasksHost({
         setPlanLoading(false);
       }
     },
-    [activePhaseId, projectSlug],
+    [activePhaseId, phaseCacheKey, projectSlug],
   );
 
   const closeModal = useCallback(() => {
@@ -128,29 +156,70 @@ export function ProjectPlanTasksHost({
       draftTitle,
       draftDescription,
     );
+    const capturedEditing = editing;
+    const capturedDraftTitle = draftTitle;
+    const capturedDraftDescription = draftDescription;
+    const prevMain = plan;
+    const prevModal = modalPlan;
     setSaveNote(null);
+
+    if (modalPlan !== null) {
+      setModalPlan(next);
+    } else {
+      setPlan(next);
+    }
+    cachePlanForCurrentModal(next);
+    setEditing(null);
+    setDraftTitle('');
+    setDraftDescription('');
+
     startTransition(async () => {
       const res = await savePlanSnapshot(projectId, effectivePhaseId, JSON.stringify(next));
       if (res && 'error' in res && res.error) {
         setSaveNote(res.error);
-        return;
+        if (prevModal !== null) {
+          setModalPlan(prevModal);
+        } else {
+          setPlan(prevMain);
+        }
+        cachePlanForCurrentModal(prevModal ?? prevMain);
+        setEditing(capturedEditing);
+        setDraftTitle(capturedDraftTitle);
+        setDraftDescription(capturedDraftDescription);
       }
-      if (modalPlan !== null) {
-        setModalPlan(next);
-      } else {
-        setPlan(next);
-      }
-      setEditing(null);
-      setDraftTitle('');
-      setDraftDescription('');
-      router.refresh();
     });
-  }, [draftDescription, draftTitle, editing, effectivePhaseId, effectivePlan, modalPlan, projectId, router]);
+  }, [
+    cachePlanForCurrentModal,
+    draftDescription,
+    draftTitle,
+    editing,
+    effectivePhaseId,
+    effectivePlan,
+    modalPlan,
+    plan,
+    projectId,
+  ]);
 
   const toggleRowBitrixSync = useCallback(
     (row: FlatPlanTaskRow) => {
       const nextSelected = !isTaskSyncChecked(row.task);
+      const updater = (p: PlanPayload) =>
+        updateTaskSyncInPlan(p, row.epicIndex, row.taskIndex, nextSelected);
+
+      const prevMain = plan;
+      const prevModal = modalPlan;
       setSyncNote(null);
+
+      let optimisticPlan: PlanPayload;
+      if (modalPlan !== null) {
+        optimisticPlan = updater(modalPlan);
+        setModalPlan(optimisticPlan);
+      } else {
+        optimisticPlan = updater(plan);
+        setPlan(optimisticPlan);
+      }
+      cachePlanForCurrentModal(optimisticPlan);
+
       startTransition(async () => {
         const res = await setPlanTaskSyncSelected(
           projectId,
@@ -161,19 +230,16 @@ export function ProjectPlanTasksHost({
         );
         if ('error' in res && res.error) {
           setSyncNote(res.error);
-          return;
+          if (prevModal !== null) {
+            setModalPlan(prevModal);
+          } else {
+            setPlan(prevMain);
+          }
+          cachePlanForCurrentModal(prevModal ?? prevMain);
         }
-        const updater = (p: PlanPayload) =>
-          updateTaskSyncInPlan(p, row.epicIndex, row.taskIndex, nextSelected);
-        if (modalPlan !== null) {
-          setModalPlan((prev) => (prev ? updater(prev) : prev));
-        } else {
-          setPlan(updater);
-        }
-        router.refresh();
       });
     },
-    [effectivePhaseId, modalPlan, projectId, router],
+    [cachePlanForCurrentModal, effectivePhaseId, modalPlan, plan, projectId],
   );
 
   const contextValue = useMemo(() => ({ openTasksForPhase }), [openTasksForPhase]);

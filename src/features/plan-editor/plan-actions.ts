@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { revalidateProjectData } from '@/shared/lib/project-cache-tags';
 import { parsePlanFromJson } from '@/shared/domain/plan';
 import { prisma } from '@/shared/lib/prisma';
 import { requireActiveUserId } from '@/shared/lib/session';
@@ -57,4 +58,5 @@ export async function savePlanSnapshot(
 
   revalidatePath(`/app/projects/${project.slug}`);
   revalidatePath('/app/account');
+  revalidateProjectData(projectId);
 }

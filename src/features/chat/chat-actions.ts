@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { revalidateProjectData } from '@/shared/lib/project-cache-tags';
 import { PLAN_SYSTEM_PROMPT } from '@/features/chat/prompts';
 import { normalizePlanFromAi, type PlanPayload } from '@/shared/domain/plan';
 import { getOpenAI } from '@/shared/lib/openai';
@@ -37,7 +38,10 @@ export async function sendChatMessage(
     return { error: 'Project not found' };
   }
 
-  const revalidateProject = () => revalidatePath(`/app/projects/${project.slug}`);
+  const revalidateProject = () => {
+    revalidatePath(`/app/projects/${project.slug}`);
+    revalidateProjectData(projectId);
+  };
 
   if (phaseId) {
     const phase = await prisma.phase.findFirst({

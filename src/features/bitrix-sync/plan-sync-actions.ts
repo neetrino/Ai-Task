@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { revalidateProjectData } from '@/shared/lib/project-cache-tags';
 import { planSchema, type PlanPayload } from '@/shared/domain/plan';
 import { prisma } from '@/shared/lib/prisma';
 import { requireActiveUserId } from '@/shared/lib/session';
@@ -68,5 +69,6 @@ export async function setPlanTaskSyncSelected(
 
   revalidatePath(`/app/projects/${project.slug}`);
   revalidatePath('/app/account');
+  revalidateProjectData(projectId);
   return { ok: true };
 }

@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { revalidateProjectData } from '@/shared/lib/project-cache-tags';
 import { z } from 'zod';
 import { prisma } from '@/shared/lib/prisma';
 import { requireActiveUserId } from '@/shared/lib/session';
@@ -32,5 +33,6 @@ export async function createPhase(
     },
   });
   revalidatePath(`/app/projects/${project.slug}`);
+  revalidateProjectData(projectId);
   return { success: true };
 }

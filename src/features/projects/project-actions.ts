@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { revalidateProjectData } from '@/shared/lib/project-cache-tags';
 import { z } from 'zod';
 import { logger } from '@/shared/lib/logger';
 import { prisma } from '@/shared/lib/prisma';
@@ -66,6 +67,7 @@ export async function updateProjectBitrix(projectId: string, formData: FormData)
     },
   });
   revalidatePath(`/app/projects/${project.slug}`);
+  revalidateProjectData(projectId);
 }
 
 function emptyToNull(v: FormDataEntryValue | null): string | null | undefined {
