@@ -1,0 +1,30 @@
+# План задач для проверки глазами. После утверждения:
+#   npm run sync -- plans/example.plan.yaml
+# Сухой прогон (ничего не создаёт в Bitrix):
+#   npm run sync -- plans/example.plan.yaml --dry-run
+
+# Название для логов (необязательно)
+project_title: "Пример: демо-план"
+
+# scrum — эпики через tasks.api.scrum.epic.add, задачи с привязкой epicId
+# parent_tasks — «эпик» = родительская задача, подзадачи с PARENT_ID (без API эпиков)
+epic_mode: scrum
+
+# Кому ставить ответственным (ID пользователя Bitrix24). Можно не указывать — возьмётся из .env
+# responsible_id: 1
+
+epics:
+  - name: "Инфраструктура"
+    description: |
+      Базовая настройка окружения и доступов.
+    tasks:
+      - title: "Проверить вебхук и PROJECT_ID"
+        description: "Убедиться, что profile.json и тестовая задача проходят."
+      - title: "Задокументировать план в README"
+        description: "Коротко описать поток YAML → sync."
+
+  - name: "Функционал"
+    description: "Основная логика продукта."
+    tasks:
+      - title: "Описать формат plan.yaml"
+        description: "Поля epic_mode, epics, tasks."

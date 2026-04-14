@@ -1,0 +1,13 @@
+---
+description: Стиль кода для src/sync-plan.ts и новых TS-скриптов
+globs: src/**/*.ts
+alwaysApply: false
+---
+
+# TypeScript в этом репозитории
+
+- Режим **strict**; запрещён тип `any`.
+- Только **named exports** (без `default export`), кроме точки входа CLI без реэкспорта.
+- Новая логика Bitrix: выносить в маленькие функции; один файл — одна ответственность; вложенность не глубже трёх уровней.
+- Секреты и полный URL вебхука не хардкодить — только `process.env` и `.env` локально.
+- После изменений: `npm run sync -- plans/example.plan.yaml --dry-run` для проверки.

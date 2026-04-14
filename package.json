@@ -1,0 +1,17 @@
+{
+  "name": "bitrix24-task-plan",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "tsx src/sync-plan.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

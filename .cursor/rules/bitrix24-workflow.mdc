@@ -1,0 +1,35 @@
+---
+description: Поток работы с планами YAML и Bitrix24 в этом репозитории
+alwaysApply: true
+---
+
+# Bitrix24-Task — рабочий процесс
+
+## Цель
+
+Пользователь даёт **текстовое ТЗ проекта**. Агент структурирует работу в **читаемый YAML-план**, затем пользователь проверяет план; загрузка в Bitrix — **только через** `npm run sync` (или после явной просьбы пользователя выполнить синк).
+
+## Переменные окружения
+
+- Целевой проект в Bitrix: **`Bitrix24_Project_id`** в `.env` (ID группы/Scrum). Меняется при смене проекта; **вебхук один** — `Webhook_URL`.
+- Опционально: `Bitrix24_responsible_id` — ответственный по умолчанию.
+- **Никогда** не коммитить `.env`, не вставлять URL вебхука и секреты в код, README или чат в полном виде.
+
+## Формат плана
+
+- Файлы: `plans/<имя>.yaml`. Для черновиков с ТЗ удобно `plans/<project>.local.yaml` (в `.gitignore`; не пушить чувствительные ТЗ без согласования).
+- Шаблон: `plans/example.plan.yaml`.
+- Поля: `epic_mode: scrum | parent_tasks`, массив `epics` с `name`, `description`, `tasks` (`title`, `description`).
+- **`scrum`** — API эпиков (`tasks.api.scrum.epic.add`) и задачи с `epicId`. **`parent_tasks`** — эпик как родительская задача, подзадачи с `PARENT_ID` (fallback, если Scrum/API эпика недоступен).
+
+## Команды
+
+- Сухой прогон: `npm run sync -- plans/<file>.yaml --dry-run`
+- Создание в Bitrix: `npm run sync -- plans/<file>.yaml` (только после проверки плана пользователем или по его запросу).
+
+## Поведение агента по ТЗ
+
+1. Разбить ТЗ на эпики и задачи; формулировки — по смыслу ТЗ, без выдуманных требований.
+2. Создать или обновить YAML; при необходимости кратко пояснить структуру пользователю.
+3. Не вызывать Bitrix REST из чата, если пользователь ожидает сначала файл — сначала YAML, затем (по запросу) синк через скрипт.
+4. Документация по API: [задачи](https://apidocs.bitrix24.ru/api-reference/tasks/index.html), [эпики Scrum](https://apidocs.bitrix24.ru/api-reference/sonet-group/scrum/epic/api-reference/sonet-group/scrum/epic/index.html).
