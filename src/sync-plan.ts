@@ -1,7 +1,7 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { config } from "dotenv";
-import { parse as parseYaml } from "yaml";
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { config } from 'dotenv';
+import { parse as parseYaml } from 'yaml';
 
 config();
 
@@ -18,7 +18,7 @@ type EpicSpec = {
 
 type Plan = {
   project_title?: string;
-  epic_mode: "scrum" | "parent_tasks";
+  epic_mode: 'scrum' | 'parent_tasks';
   responsible_id?: number;
   epics: EpicSpec[];
 };
@@ -34,17 +34,17 @@ type ScrumTaskUpdatePayload = {
 };
 
 function isRecord(x: unknown): x is Record<string, unknown> {
-  return typeof x === "object" && x !== null && !Array.isArray(x);
+  return typeof x === 'object' && x !== null && !Array.isArray(x);
 }
 
 function parseTaskSpec(x: unknown, epicPath: string, index: number): TaskSpec {
   if (!isRecord(x)) throw new Error(`${epicPath}: tasks[${index}] must be an object`);
   const title = x.title;
-  if (typeof title !== "string" || title.trim() === "") {
+  if (typeof title !== 'string' || title.trim() === '') {
     throw new Error(`${epicPath}: tasks[${index}].title is required`);
   }
   const description = x.description;
-  if (description !== undefined && typeof description !== "string") {
+  if (description !== undefined && typeof description !== 'string') {
     throw new Error(`${epicPath}: tasks[${index}].description must be a string`);
   }
   return { title: title.trim(), description: description?.trim() };
@@ -54,7 +54,7 @@ function parseEpicSpec(x: unknown, index: number): EpicSpec {
   const path = `epics[${index}]`;
   if (!isRecord(x)) throw new Error(`${path} must be an object`);
   const name = x.name;
-  if (typeof name !== "string" || name.trim() === "") {
+  if (typeof name !== 'string' || name.trim() === '') {
     throw new Error(`${path}.name is required`);
   }
   const rawTasks = x.tasks;
@@ -63,30 +63,30 @@ function parseEpicSpec(x: unknown, index: number): EpicSpec {
   }
   const tasks = rawTasks.map((t, i) => parseTaskSpec(t, path, i));
   const description = x.description;
-  if (description !== undefined && typeof description !== "string") {
+  if (description !== undefined && typeof description !== 'string') {
     throw new Error(`${path}.description must be a string`);
   }
   return { name: name.trim(), description: description?.trim(), tasks };
 }
 
 function parsePlan(raw: unknown): Plan {
-  if (!isRecord(raw)) throw new Error("Plan root must be an object");
+  if (!isRecord(raw)) throw new Error('Plan root must be an object');
   const mode = raw.epic_mode;
-  if (mode !== "scrum" && mode !== "parent_tasks") {
+  if (mode !== 'scrum' && mode !== 'parent_tasks') {
     throw new Error('epic_mode must be "scrum" or "parent_tasks"');
   }
   const epicsRaw = raw.epics;
   if (!Array.isArray(epicsRaw) || epicsRaw.length === 0) {
-    throw new Error("epics must be a non-empty array");
+    throw new Error('epics must be a non-empty array');
   }
   const epics = epicsRaw.map((e, i) => parseEpicSpec(e, i));
   const project_title = raw.project_title;
-  if (project_title !== undefined && typeof project_title !== "string") {
-    throw new Error("project_title must be a string");
+  if (project_title !== undefined && typeof project_title !== 'string') {
+    throw new Error('project_title must be a string');
   }
   const responsible_id = raw.responsible_id;
-  if (responsible_id !== undefined && typeof responsible_id !== "number") {
-    throw new Error("responsible_id must be a number");
+  if (responsible_id !== undefined && typeof responsible_id !== 'number') {
+    throw new Error('responsible_id must be a number');
   }
   return {
     project_title: project_title?.trim(),
@@ -99,12 +99,12 @@ function parsePlan(raw: unknown): Plan {
 async function bitrixCall<T>(
   webhookBase: string,
   method: string,
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
 ): Promise<T> {
   const url = `${webhookBase}${method}`;
   const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(body),
   });
   const json = (await res.json()) as {
@@ -116,7 +116,7 @@ async function bitrixCall<T>(
     throw new Error(`HTTP ${res.status}: ${JSON.stringify(json)}`);
   }
   if (json.error) {
-    throw new Error(`${json.error}: ${json.error_description ?? ""}`);
+    throw new Error(`${json.error}: ${json.error_description ?? ''}`);
   }
   return json.result as T;
 }
@@ -126,25 +126,21 @@ async function bitrixCall<T>(
  * Official flow: create task, then `tasks.api.scrum.task.update` with `epicId`.
  * @see https://apidocs.bitrix24.com/api-reference/sonet-group/scrum/task/tasks-api-scrum-task-update.html
  */
-async function linkScrumTaskToEpic(
-  webhook: string,
-  taskId: number,
-  epicId: number
-): Promise<void> {
+async function linkScrumTaskToEpic(webhook: string, taskId: number, epicId: number): Promise<void> {
   const payload = await bitrixCall<ScrumTaskUpdatePayload | boolean>(
     webhook,
-    "tasks.api.scrum.task.update",
+    'tasks.api.scrum.task.update',
     {
       id: taskId,
       fields: { epicId },
-    }
+    },
   );
   if (payload === true) return;
-  if (typeof payload === "object" && payload !== null && "status" in payload) {
-    if (payload.status === "success") return;
-    if (payload.status === "error") {
+  if (typeof payload === 'object' && payload !== null && 'status' in payload) {
+    if (payload.status === 'success') return;
+    if (payload.status === 'error') {
       throw new Error(
-        `tasks.api.scrum.task.update failed for task ${taskId}: ${JSON.stringify(payload)}`
+        `tasks.api.scrum.task.update failed for task ${taskId}: ${JSON.stringify(payload)}`,
       );
     }
   }
@@ -158,7 +154,7 @@ type TaskActors = {
 };
 
 function parseUserId(raw: string | undefined, label: string): number | undefined {
-  if (raw === undefined || raw.trim() === "") return undefined;
+  if (raw === undefined || raw.trim() === '') return undefined;
   const n = Number(raw.trim());
   if (!Number.isFinite(n)) {
     throw new Error(`${label} must be a number`);
@@ -169,15 +165,18 @@ function parseUserId(raw: string | undefined, label: string): number | undefined
 function loadEnv(): { webhook: string; groupId: number } & TaskActors {
   const webhook = process.env.Webhook_URL?.trim();
   const idRaw = process.env.Bitrix24_Project_id?.trim();
-  const legacyResponsible = parseUserId(process.env.Bitrix24_responsible_id, "Bitrix24_responsible_id");
-  const ownerParsed = parseUserId(process.env.Task_owner_id, "Task_owner_id");
-  const assigneeParsed = parseUserId(process.env.Task_Assignee_id, "Task_Assignee_id");
+  const legacyResponsible = parseUserId(
+    process.env.Bitrix24_responsible_id,
+    'Bitrix24_responsible_id',
+  );
+  const ownerParsed = parseUserId(process.env.Task_owner_id, 'Task_owner_id');
+  const assigneeParsed = parseUserId(process.env.Task_Assignee_id, 'Task_Assignee_id');
 
-  if (!webhook) throw new Error("Missing Webhook_URL in .env");
-  if (!idRaw) throw new Error("Missing Bitrix24_Project_id in .env");
+  if (!webhook) throw new Error('Missing Webhook_URL in .env');
+  if (!idRaw) throw new Error('Missing Bitrix24_Project_id in .env');
   const groupId = Number(idRaw);
   if (!Number.isFinite(groupId)) {
-    throw new Error("Bitrix24_Project_id must be a number");
+    throw new Error('Bitrix24_Project_id must be a number');
   }
 
   const taskOwnerId = ownerParsed ?? legacyResponsible ?? 1;
@@ -187,9 +186,9 @@ function loadEnv(): { webhook: string; groupId: number } & TaskActors {
 }
 
 function parseArgs(argv: string[]): { planPath: string; dryRun: boolean } {
-  const rest = argv.slice(2).filter((a) => a !== "--");
-  const dryRun = rest.includes("--dry-run");
-  const pathArg = rest.find((a) => !a.startsWith("--"));
+  const rest = argv.slice(2).filter((a) => a !== '--');
+  const dryRun = rest.includes('--dry-run');
+  const pathArg = rest.find((a) => !a.startsWith('--'));
   if (!pathArg) {
     throw new Error('Usage: npm run sync -- <path-to-plan.yaml> [--dry-run]');
   }
@@ -205,7 +204,7 @@ async function syncScrum(
   webhook: string,
   groupId: number,
   actors: TaskActors,
-  dryRun: boolean
+  dryRun: boolean,
 ): Promise<void> {
   const assigneeId = resolveAssigneeId(plan, actors);
   for (const epic of plan.epics) {
@@ -213,20 +212,20 @@ async function syncScrum(
       console.log(`[dry-run] epic: ${epic.name} (${epic.tasks.length} tasks)`);
       continue;
     }
-    const epicResult = await bitrixCall<EpicAddResult>(webhook, "tasks.api.scrum.epic.add", {
+    const epicResult = await bitrixCall<EpicAddResult>(webhook, 'tasks.api.scrum.epic.add', {
       fields: {
         name: epic.name,
         groupId,
-        description: epic.description ?? "",
+        description: epic.description ?? '',
       },
     });
     const epicId = epicResult.id;
     console.log(`Epic created: id=${epicId} name=${epic.name}`);
     for (const task of epic.tasks) {
-      const taskResult = await bitrixCall<TaskAddResult>(webhook, "tasks.task.add", {
+      const taskResult = await bitrixCall<TaskAddResult>(webhook, 'tasks.task.add', {
         fields: {
           TITLE: task.title,
-          DESCRIPTION: task.description ?? "",
+          DESCRIPTION: task.description ?? '',
           GROUP_ID: groupId,
           RESPONSIBLE_ID: assigneeId,
           CREATED_BY: actors.taskOwnerId,
@@ -244,7 +243,7 @@ async function syncParentTasks(
   webhook: string,
   groupId: number,
   actors: TaskActors,
-  dryRun: boolean
+  dryRun: boolean,
 ): Promise<void> {
   const assigneeId = resolveAssigneeId(plan, actors);
   for (const epic of plan.epics) {
@@ -252,10 +251,10 @@ async function syncParentTasks(
       console.log(`[dry-run] parent task: ${epic.name} + ${epic.tasks.length} subtasks`);
       continue;
     }
-    const parent = await bitrixCall<TaskAddResult>(webhook, "tasks.task.add", {
+    const parent = await bitrixCall<TaskAddResult>(webhook, 'tasks.task.add', {
       fields: {
         TITLE: epic.name,
-        DESCRIPTION: epic.description ?? "",
+        DESCRIPTION: epic.description ?? '',
         GROUP_ID: groupId,
         RESPONSIBLE_ID: assigneeId,
         CREATED_BY: actors.taskOwnerId,
@@ -264,10 +263,10 @@ async function syncParentTasks(
     const parentId = Number(parent.task.id);
     console.log(`Epic (parent task): id=${parentId} ${epic.name}`);
     for (const task of epic.tasks) {
-      const taskResult = await bitrixCall<TaskAddResult>(webhook, "tasks.task.add", {
+      const taskResult = await bitrixCall<TaskAddResult>(webhook, 'tasks.task.add', {
         fields: {
           TITLE: task.title,
-          DESCRIPTION: task.description ?? "",
+          DESCRIPTION: task.description ?? '',
           GROUP_ID: groupId,
           RESPONSIBLE_ID: assigneeId,
           CREATED_BY: actors.taskOwnerId,
@@ -281,7 +280,7 @@ async function syncParentTasks(
 
 async function main(): Promise<void> {
   const { planPath, dryRun } = parseArgs(process.argv);
-  const raw = readFileSync(planPath, "utf8");
+  const raw = readFileSync(planPath, 'utf8');
   const plan = parsePlan(parseYaml(raw));
   const { webhook, groupId, taskOwnerId, taskAssigneeId } = loadEnv();
 
@@ -289,13 +288,13 @@ async function main(): Promise<void> {
     `Plan: ${plan.project_title ?? planPath}\n` +
       `Mode: ${plan.epic_mode}, groupId=${groupId}, dryRun=${dryRun}\n` +
       `CREATED_BY (owner)=${taskOwnerId}, RESPONSIBLE_ID (assignee base)=${taskAssigneeId}` +
-      (plan.responsible_id !== undefined ? `, YAML override assignee=${plan.responsible_id}` : "") +
-      "\n"
+      (plan.responsible_id !== undefined ? `, YAML override assignee=${plan.responsible_id}` : '') +
+      '\n',
   );
 
   const actors: TaskActors = { taskOwnerId, taskAssigneeId };
 
-  if (plan.epic_mode === "scrum") {
+  if (plan.epic_mode === 'scrum') {
     await syncScrum(plan, webhook, groupId, actors, dryRun);
   } else {
     await syncParentTasks(plan, webhook, groupId, actors, dryRun);

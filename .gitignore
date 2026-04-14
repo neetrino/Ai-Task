@@ -1,8 +1,29 @@
-node_modules/
-dist/
+# OS
 .DS_Store
+Thumbs.db
+
+# Env and secrets
 .env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+dist/
+build/
+coverage/
+
+# Logs and temp
 *.log
+npm-debug.log*
+tmp/
+temp/
+.cache/
+
+# Project-specific (Bitrix sync / local plans)
 plans/*.local.yaml
 plans/*.local.md
 plans/*-synced.yaml

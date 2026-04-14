@@ -4,13 +4,13 @@
 
 ## `.env`
 
-| Переменная | Описание |
-|------------|----------|
-| `Webhook_URL` | URL вебхука со слэшем в конце |
-| `Bitrix24_Project_id` | ID группы / проекта / Scrum в Bitrix |
-| `Task_owner_id` | `CREATED_BY` — постановщик (от чьего имени создаётся задача) |
-| `Task_Assignee_id` | `RESPONSIBLE_ID` — исполнитель (в YAML `responsible_id` переопределяет только его) |
-| `Bitrix24_responsible_id` | Опционально: fallback для owner и assignee, если переменные выше не заданы |
+| Переменная                | Описание                                                                           |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| `Webhook_URL`             | URL вебхука со слэшем в конце                                                      |
+| `Bitrix24_Project_id`     | ID группы / проекта / Scrum в Bitrix                                               |
+| `Task_owner_id`           | `CREATED_BY` — постановщик (от чьего имени создаётся задача)                       |
+| `Task_Assignee_id`        | `RESPONSIBLE_ID` — исполнитель (в YAML `responsible_id` переопределяет только его) |
+| `Bitrix24_responsible_id` | Опционально: fallback для owner и assignee, если переменные выше не заданы         |
 
 `.env` не коммитить. Шаблон — `.env.example`.
 
