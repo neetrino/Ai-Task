@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { sendChatMessage } from '@/features/chat/chat-actions';
 
 function SubmitChat() {
@@ -26,7 +27,7 @@ export function ChatPanel({
   /** Effective model id used for API calls (env or project override). */
   activeModel: string;
 }) {
-  const [state, formAction] = useFormState(
+  const [state, formAction] = useActionState(
     sendChatMessage.bind(null, projectId, phaseId),
     undefined,
   );

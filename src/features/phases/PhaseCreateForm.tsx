@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { createPhase } from '@/features/phases/phase-actions';
 
 function SubmitPhase() {
@@ -17,7 +18,7 @@ function SubmitPhase() {
 }
 
 export function PhaseCreateForm({ projectId }: { projectId: string }) {
-  const [state, action] = useFormState(createPhase.bind(null, projectId), undefined);
+  const [state, action] = useActionState(createPhase.bind(null, projectId), undefined);
   return (
     <form action={action} className="flex flex-wrap items-end gap-2">
       <label className="flex flex-col gap-1 text-sm font-medium text-slate-700" htmlFor="label">

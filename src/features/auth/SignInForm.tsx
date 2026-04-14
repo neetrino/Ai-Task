@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { signInWithEmail } from '@/features/auth/auth-actions';
 
 function SubmitButton() {
@@ -17,7 +18,7 @@ function SubmitButton() {
 }
 
 export function SignInForm() {
-  const [state, formAction] = useFormState(signInWithEmail, undefined);
+  const [state, formAction] = useActionState(signInWithEmail, undefined);
   return (
     <form action={formAction} className="flex max-w-md flex-col gap-4">
       <label className="flex flex-col gap-1 text-sm font-medium text-slate-700" htmlFor="email">
