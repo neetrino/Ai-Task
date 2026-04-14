@@ -13,7 +13,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <AiShell contentClassName="flex min-h-screen flex-col">
       <header className="border-b border-white/10 bg-slate-950/50 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between px-6 py-4">
           <div className="flex items-center gap-8">
             <Link className="font-semibold text-slate-100" href="/app">
               PlanRelay
@@ -35,7 +35,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </form>
         </div>
       </header>
-      <div className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">{children}</div>
+      <div className="mx-auto w-full max-w-[1600px] flex-1 px-6 py-8">{children}</div>
     </AiShell>
   );
 }

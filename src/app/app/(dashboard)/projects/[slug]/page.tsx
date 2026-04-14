@@ -1,25 +1,16 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChatPanel } from '@/features/chat/ChatPanel';
-import { SyncToolbar } from '@/features/bitrix-sync/SyncToolbar';
-import { BitrixSettingsForm } from '@/features/projects/BitrixSettingsForm';
+import { ChatComposer } from '@/features/chat/ChatComposer';
+import { ProjectChatWorkspace } from '@/features/chat/ProjectChatWorkspace';
+import { PhasePills } from '@/features/phases/PhasePills';
+import { PlanTasksPanel } from '@/features/projects/PlanTasksPanel';
+import { ProjectSettingsAside } from '@/features/projects/ProjectSettingsAside';
 import { getProjectForUser } from '@/features/projects/project-queries';
-import { PhaseSection } from '@/features/phases/PhaseSection';
-import { PlanEditor } from '@/features/plan-editor/PlanEditor';
-import { ChatModelForm } from '@/features/projects/ChatModelForm';
 import { DEFAULT_PLAN, parsePlanFromJson, type PlanPayload } from '@/shared/domain/plan';
 import { getEffectiveChatModel } from '@/shared/lib/openai-model';
 import { prisma } from '@/shared/lib/prisma';
 import { requireActiveUserId } from '@/shared/lib/session';
-import {
-  WORKSPACE_BODY_CLASS,
-  WORKSPACE_CODE_CLASS,
-  WORKSPACE_GHOST_BTN_CLASS,
-  WORKSPACE_H2_CLASS,
-  WORKSPACE_INNER_SCROLL_CLASS,
-  WORKSPACE_LINK_CLASS,
-  WORKSPACE_PANEL_CLASS,
-} from '@/shared/ui/workspace-ui';
+import { WORKSPACE_BODY_CLASS, WORKSPACE_LINK_CLASS, WORKSPACE_PANEL_CLASS } from '@/shared/ui/workspace-ui';
 
 function resolvePlanPayload(snapshotPayload: unknown | null): PlanPayload {
   if (!snapshotPayload) return DEFAULT_PLAN;
@@ -71,7 +62,6 @@ export default async function ProjectPage({
   ]);
 
   const plan = resolvePlanPayload(snapshot?.payload ?? null);
-
   const effectiveChatModel = getEffectiveChatModel(project);
 
   const exportMd = activePhaseId
@@ -81,101 +71,61 @@ export default async function ProjectPage({
     ? `/api/projects/${project.slug}/export?format=yaml&phase=${activePhaseId}`
     : `/api/projects/${project.slug}/export?format=yaml`;
 
+  const chatLines = messages.map((m) => ({
+    id: m.id,
+    role: m.role,
+    content: m.content,
+  }));
+
   return (
-    <div className="flex flex-col gap-10">
-      <div className="flex flex-col gap-2">
-        <Link className={WORKSPACE_LINK_CLASS} href="/app">
-          ← All projects
-        </Link>
-        <h1 className="text-2xl font-semibold tracking-tight text-white">{project.name}</h1>
-        <p className={WORKSPACE_BODY_CLASS}>
-          Chat refines the plan; export Markdown or YAML anytime. Sync uses server{' '}
-          <code className={WORKSPACE_CODE_CLASS}>Webhook_URL</code> plus the Bitrix ids below.
-        </p>
-      </div>
-
-      <PhaseSection
-        activePhaseId={activePhaseId}
-        phases={phases}
-        projectId={project.id}
-        projectSlug={project.slug}
-      />
-
-      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
-        <h2 className={WORKSPACE_H2_CLASS}>AI model</h2>
-        <p className={`mt-1 ${WORKSPACE_BODY_CLASS}`}>
-          Pick an OpenAI model for this project. Labels describe typical cost vs capability (see OpenAI
-          pricing for your account).
-        </p>
-        <div className="mt-4">
-          <ChatModelForm project={project} />
+    <div className="flex min-h-0 flex-col gap-4">
+      <header className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <Link className={WORKSPACE_LINK_CLASS} href="/app">
+            ← All projects
+          </Link>
+          <h1 className="mt-1 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+            {project.name}
+          </h1>
         </div>
-      </section>
-
-      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
-        <h2 className={WORKSPACE_H2_CLASS}>Bitrix settings</h2>
-        <p className={`mt-1 ${WORKSPACE_BODY_CLASS}`}>
-          Stored per project; webhook stays in deployment secrets.
+        <p className={`max-w-xl ${WORKSPACE_BODY_CLASS} text-xs sm:text-sm`}>
+          Center: chat. Left: AI plan tasks. Right: one-time setup (model, Bitrix, export).
         </p>
-        <div className="mt-4">
-          <BitrixSettingsForm project={project} />
-        </div>
-      </section>
+      </header>
 
-      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
-        <h2 className={WORKSPACE_H2_CLASS}>Export</h2>
-        <p className={`mt-1 ${WORKSPACE_BODY_CLASS}`}>
-          Download the latest saved plan for this phase.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <a className={WORKSPACE_GHOST_BTN_CLASS} href={exportMd}>
-            Download Markdown
-          </a>
-          <a className={WORKSPACE_GHOST_BTN_CLASS} href={exportYaml}>
-            Download YAML
-          </a>
-        </div>
-      </section>
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:h-[calc(100vh-9.5rem)] lg:grid-cols-[minmax(240px,280px)_minmax(0,1fr)_minmax(260px,300px)] lg:gap-5 lg:overflow-hidden">
+        <aside className="order-2 flex min-h-0 flex-col gap-3 overflow-hidden lg:order-1">
+          <div className={`shrink-0 p-4 ${WORKSPACE_PANEL_CLASS}`}>
+            <PhasePills activePhaseId={activePhaseId} phases={phases} projectSlug={project.slug} />
+          </div>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <PlanTasksPanel plan={plan} />
+          </div>
+        </aside>
 
-      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
-        <h2 className={WORKSPACE_H2_CLASS}>Bitrix sync</h2>
-        <p className={`mt-1 ${WORKSPACE_BODY_CLASS}`}>
-          Dry-run logs intent; real sync creates tasks via the incoming webhook for the active phase
-          plan.
-        </p>
-        <div className="mt-4">
-          <SyncToolbar phaseId={activePhaseId} projectId={project.id} />
-        </div>
-      </section>
+        <section className="order-1 flex min-h-[min(60vh,520px)] flex-col lg:order-2 lg:h-full lg:min-h-0">
+          <ProjectChatWorkspace
+            composer={
+              <ChatComposer
+                activeModel={effectiveChatModel}
+                phaseId={activePhaseId}
+                projectId={project.id}
+              />
+            }
+            messages={chatLines}
+          />
+        </section>
 
-      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
-        <h2 className={WORKSPACE_H2_CLASS}>AI chat</h2>
-        <div className="mt-4 flex flex-col gap-4">
-          <ul className={WORKSPACE_INNER_SCROLL_CLASS}>
-            {messages.length === 0 ? (
-              <li className="text-slate-400">No messages yet. Start by describing the initiative.</li>
-            ) : (
-              messages.map((m) => (
-                <li key={m.id}>
-                  <span className="font-medium text-violet-200/90">
-                    {m.role === 'user' ? 'You' : 'Assistant'}:
-                  </span>{' '}
-                  <span className="whitespace-pre-wrap text-slate-300">{m.content}</span>
-                </li>
-              ))
-            )}
-          </ul>
-          <ChatPanel
-            activeModel={effectiveChatModel}
-            phaseId={activePhaseId}
-            projectId={project.id}
+        <div className="order-3 min-h-0 lg:overflow-hidden">
+          <ProjectSettingsAside
+            activePhaseId={activePhaseId}
+            exportMd={exportMd}
+            exportYaml={exportYaml}
+            plan={plan}
+            project={project}
           />
         </div>
-      </section>
-
-      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
-        <PlanEditor initialPlan={plan} phaseId={activePhaseId} projectId={project.id} />
-      </section>
+      </div>
     </div>
   );
 }

@@ -14,10 +14,13 @@ export function PlanEditor({
   projectId,
   phaseId,
   initialPlan,
+  embedded = false,
 }: {
   projectId: string;
   phaseId: string | null;
   initialPlan: PlanPayload;
+  /** Hides large heading; use inside settings panels. */
+  embedded?: boolean;
 }) {
   const [json, setJson] = useState(() => JSON.stringify(initialPlan, null, 2));
   const [note, setNote] = useState<string | null>(null);
@@ -45,15 +48,19 @@ export function PlanEditor({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className={WORKSPACE_H2_CLASS}>Plan</h2>
+      <div
+        className={`flex items-center gap-3 ${embedded ? 'justify-end' : 'justify-between'}`}
+      >
+        {embedded ? null : <h2 className={WORKSPACE_H2_CLASS}>Plan</h2>}
         <button className={WORKSPACE_GHOST_BTN_CLASS} disabled={pending} onClick={onSave} type="button">
           {pending ? 'Saving…' : 'Save plan'}
         </button>
       </div>
-      <p className={WORKSPACE_BODY_CLASS}>
-        Edit the structured JSON (validated on save). AI chat updates this automatically.
-      </p>
+      {embedded ? null : (
+        <p className={WORKSPACE_BODY_CLASS}>
+          Edit the structured JSON (validated on save). AI chat updates this automatically.
+        </p>
+      )}
       <textarea
         className={`min-h-[220px] w-full font-mono ${WORKSPACE_FIELD_CLASS}`}
         onChange={(e) => setJson(e.target.value)}
