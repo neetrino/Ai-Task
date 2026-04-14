@@ -18,26 +18,33 @@ const bitrixSchema = z.object({
   taskAssigneeId: z.string().max(64).optional().nullable(),
 });
 
-export async function createProject(formData: FormData): Promise<void> {
+export type CreateProjectState = { success: true } | { error: string };
+
+export async function createProject(
+  _prev: CreateProjectState | undefined,
+  formData: FormData,
+): Promise<CreateProjectState> {
   const userId = await requireActiveUserId();
   const parsed = createSchema.safeParse({ name: formData.get('name') });
   if (!parsed.success) {
     logger.warn({ issues: parsed.error.flatten() }, 'createProject validation failed');
-    return;
+    return { error: 'Enter a valid project name.' };
   }
-  let slug = slugify(parsed.data.name);
+  const trimmed = parsed.data.name.trim();
+  let slug = slugify(trimmed);
   const clash = await prisma.project.findUnique({ where: { slug } });
   if (clash) {
     slug = `${slug}-${Date.now().toString(36)}`;
   }
   await prisma.project.create({
     data: {
-      name: parsed.data.name.trim(),
+      name: trimmed,
       slug,
       ownerId: userId,
     },
   });
   revalidatePath('/app');
+  return { success: true };
 }
 
 export async function updateProjectBitrix(projectId: string, formData: FormData): Promise<void> {
