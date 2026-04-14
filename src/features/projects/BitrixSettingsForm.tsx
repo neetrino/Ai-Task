@@ -14,45 +14,60 @@ type ProjectBitrixFields = {
 
 export function BitrixSettingsForm({ project }: { project: ProjectBitrixFields }) {
   return (
-    <form action={updateProjectBitrix.bind(null, project.id)} className="flex flex-col gap-3">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className={`flex flex-col gap-1 ${WORKSPACE_LABEL_CLASS}`} htmlFor="bitrixProjectId">
-          Bitrix project / group id
+    <form
+      action={updateProjectBitrix.bind(null, project.id)}
+      className="flex min-w-0 flex-col gap-4"
+    >
+      <div className="flex min-w-0 flex-col gap-4">
+        <label className="flex min-w-0 flex-col gap-1.5" htmlFor="bitrixProjectId">
+          <span className={WORKSPACE_LABEL_CLASS}>Project or group</span>
+          <span className="text-xs leading-snug text-slate-500">
+            Where new tasks are created (numeric ID in Bitrix).
+          </span>
           <input
-            className={WORKSPACE_FIELD_CLASS}
+            className={`min-w-0 ${WORKSPACE_FIELD_CLASS}`}
             defaultValue={project.bitrixProjectId ?? ''}
             id="bitrixProjectId"
             name="bitrixProjectId"
             placeholder="e.g. 425"
+            title="Bitrix project / group id"
             type="text"
           />
         </label>
-        <label className={`flex flex-col gap-1 ${WORKSPACE_LABEL_CLASS}`} htmlFor="taskOwnerId">
-          Task owner id (CREATED_BY)
+        <label className="flex min-w-0 flex-col gap-1.5" htmlFor="taskOwnerId">
+          <span className={WORKSPACE_LABEL_CLASS}>Task creator</span>
+          <span className="text-xs leading-snug text-slate-500">
+            Shown as the author of tasks created from this project.
+          </span>
           <input
-            className={WORKSPACE_FIELD_CLASS}
+            className={`min-w-0 ${WORKSPACE_FIELD_CLASS}`}
             defaultValue={project.taskOwnerId ?? ''}
             id="taskOwnerId"
             name="taskOwnerId"
-            placeholder="Bitrix user id"
+            placeholder="User ID"
+            title="Bitrix field: CREATED_BY"
             type="text"
           />
         </label>
-        <label className={`flex flex-col gap-1 ${WORKSPACE_LABEL_CLASS}`} htmlFor="taskAssigneeId">
-          Task assignee id (RESPONSIBLE_ID)
+        <label className="flex min-w-0 flex-col gap-1.5" htmlFor="taskAssigneeId">
+          <span className={WORKSPACE_LABEL_CLASS}>Default assignee</span>
+          <span className="text-xs leading-snug text-slate-500">
+            Who gets the task by default when it is synced.
+          </span>
           <input
-            className={WORKSPACE_FIELD_CLASS}
+            className={`min-w-0 ${WORKSPACE_FIELD_CLASS}`}
             defaultValue={project.taskAssigneeId ?? ''}
             id="taskAssigneeId"
             name="taskAssigneeId"
-            placeholder="Bitrix user id"
+            placeholder="User ID"
+            title="Bitrix field: RESPONSIBLE_ID"
             type="text"
           />
         </label>
       </div>
-      <div className="flex justify-end">
+      <div className="flex justify-end pt-1">
         <button className={WORKSPACE_ACCENT_BTN_CLASS} type="submit">
-          Save Bitrix settings
+          Save settings
         </button>
       </div>
     </form>

@@ -27,8 +27,9 @@ export function ProjectSettingsAside({
       <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Setup</p>
       <details className={SETUP_DETAILS_CLASS}>
         <summary className={SETUP_SUMMARY_CLASS}>Bitrix24</summary>
-        <p className={`mt-2 ${WORKSPACE_BODY_CLASS} text-xs`}>
-          Webhook stays in server env; ids are stored per project.
+        <p className={`mt-2 ${WORKSPACE_BODY_CLASS} text-xs leading-relaxed`}>
+          Webhook URL is set in the server environment. The values below are saved for this project
+          only.
         </p>
         <div className="mt-3">
           <BitrixSettingsForm project={project} />
