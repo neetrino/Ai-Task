@@ -9,3 +9,24 @@
 body {
   @apply min-h-screen bg-slate-50 text-slate-900 antialiased;
 }
+
+@keyframes home-aurora {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.06);
+  }
+}
+
+.home-aurora {
+  animation: home-aurora 14s ease-in-out infinite;
+}
+
+.home-aurora-delayed {
+  animation: home-aurora 14s ease-in-out infinite;
+  animation-delay: -7s;
+}
