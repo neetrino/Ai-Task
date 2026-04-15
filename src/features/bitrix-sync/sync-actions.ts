@@ -11,6 +11,7 @@ import { enforceRateLimit } from '@/shared/lib/rate-limit';
 import { requireActiveUserId } from '@/shared/lib/session';
 import { logger } from '@/shared/lib/logger';
 import { resolveBitrixContext } from '@/server/bitrix/env';
+import { isBitrixProjectConnectionComplete } from '@/features/bitrix-sync/bitrix-project-connection-status';
 
 export async function syncProjectToBitrix(
   projectId: string,
@@ -41,7 +42,7 @@ export async function syncProjectToBitrix(
     return { error: 'Webhook_URL is not configured on the server' };
   }
 
-  if (!project.bitrixProjectId || !project.taskOwnerId || !project.taskAssigneeId) {
+  if (!isBitrixProjectConnectionComplete(project)) {
     return { error: 'Fill Bitrix project id, task owner, and assignee in project settings' };
   }
 

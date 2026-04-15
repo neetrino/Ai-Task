@@ -9,8 +9,7 @@ import {
 import { PROJECT_TASKS_CHAT_GRID_CLASS } from '@/features/projects/plan-tasks-layout';
 import { ProjectPlanTasksHost } from '@/features/projects/ProjectPlanTasksHost';
 import { ProjectPlanMeta } from '@/features/projects/ProjectPlanMeta';
-import { ProjectBitrixSetupPanel } from '@/features/projects/ProjectBitrixSetupPanel';
-import { getProjectForUser } from '@/features/projects/project-queries';
+import { getProjectForUser, listProjectsForUser } from '@/features/projects/project-queries';
 import { DEFAULT_PLAN, parsePlanFromJson, type PlanPayload } from '@/shared/domain/plan';
 import { getEffectiveChatModel } from '@/shared/lib/openai-model';
 import { prisma } from '@/shared/lib/prisma';
@@ -35,10 +34,15 @@ export default async function ProjectPage({
   const { slug } = await params;
   const { phase: phaseParam } = await searchParams;
   const userId = await requireActiveUserId();
-  const project = await getProjectForUser(slug, userId);
+  const [project, projectList] = await Promise.all([
+    getProjectForUser(slug, userId),
+    listProjectsForUser(userId),
+  ]);
   if (!project) {
     notFound();
   }
+
+  const projectOptions = projectList.map((p) => ({ slug: p.slug, name: p.name }));
 
   const phases = await prisma.phase.findMany({
     where: { projectId: project.id },
@@ -71,12 +75,6 @@ export default async function ProjectPage({
 
   return (
     <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      {/*
-        Bitrix "edge" controls are position:fixed — they do not occupy flow height. Do not wrap them
-        in a flex row with gap-* or an empty shrink-0 slot; that leaves a visible strip under the app header.
-      */}
-      <ProjectBitrixSetupPanel activePhaseId={activePhaseId} layout="edge" project={project} />
-
       <ProjectPlanTasksHost
         activePhaseId={activePhaseId}
         initialPlan={plan}
@@ -85,7 +83,20 @@ export default async function ProjectPage({
       >
         <div className={PROJECT_TASKS_CHAT_GRID_CLASS}>
           <aside className="order-2 flex min-h-0 flex-1 flex-col overflow-hidden bg-workspace-rail lg:order-1 lg:border-r lg:border-workspace-hairline lg:pl-5">
-            <ProjectPlanMeta plan={plan} projectName={project.name} />
+            <ProjectPlanMeta
+              activePhaseId={activePhaseId}
+              activeSlug={project.slug}
+              bitrixProject={{
+                id: project.id,
+                openaiChatModel: project.openaiChatModel,
+                bitrixProjectId: project.bitrixProjectId,
+                taskOwnerId: project.taskOwnerId,
+                taskAssigneeId: project.taskAssigneeId,
+              }}
+              plan={plan}
+              projectName={project.name}
+              projects={projectOptions}
+            />
             <PhaseSidebarNav
               activePhaseId={activePhaseId}
               phases={phases}

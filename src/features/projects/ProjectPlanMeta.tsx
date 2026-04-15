@@ -2,7 +2,11 @@ import {
   DECOMPOSITION_LEVEL_DESCRIPTIONS,
   type PlanPayload,
 } from '@/shared/domain/plan';
+import { ProjectWorkspaceRailHeader } from '@/features/projects/ProjectWorkspaceRailHeader';
+import type { BitrixSettingsProject } from '@/features/projects/BitrixProjectSettingsDialog';
 import { SparklesGlyph } from '@/shared/ui/brand-icons';
+
+type ProjectOption = { slug: string; name: string };
 
 /**
  * Project + plan summary for the left workspace rail (top-aligned, compact).
@@ -10,9 +14,17 @@ import { SparklesGlyph } from '@/shared/ui/brand-icons';
 export function ProjectPlanMeta({
   projectName,
   plan,
+  projects,
+  activeSlug,
+  bitrixProject,
+  activePhaseId,
 }: {
   projectName: string;
   plan: PlanPayload;
+  projects: ProjectOption[];
+  activeSlug: string;
+  bitrixProject: BitrixSettingsProject;
+  activePhaseId: string | null;
 }) {
   const showSubtitle =
     Boolean(plan.project_title) && plan.project_title !== projectName;
@@ -20,13 +32,16 @@ export function ProjectPlanMeta({
   return (
     <div className="shrink-0 border-b border-workspace-hairline px-3 py-3">
       <div className="flex items-start gap-2">
-        <SparklesGlyph className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-400" />
+        <SparklesGlyph className="mt-2 h-3.5 w-3.5 shrink-0 text-neutral-400" />
         <div className="min-w-0 flex-1">
-          <h1 className="text-left text-base font-semibold leading-snug tracking-tight text-neutral-100">
-            {projectName}
-          </h1>
+          <ProjectWorkspaceRailHeader
+            activePhaseId={activePhaseId}
+            activeSlug={activeSlug}
+            project={bitrixProject}
+            projects={projects}
+          />
           {showSubtitle ? (
-            <p className="mt-1 text-left text-sm font-medium text-neutral-300">{plan.project_title}</p>
+            <p className="mt-2 text-left text-sm font-medium text-neutral-300">{plan.project_title}</p>
           ) : null}
           <div className="mt-2 text-left text-xs leading-relaxed text-neutral-500">
             {plan.decomposition_level ? (
