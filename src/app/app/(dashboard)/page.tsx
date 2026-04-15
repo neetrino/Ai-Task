@@ -22,10 +22,10 @@ export default async function AppDashboardPage() {
           <div className="flex flex-col gap-3">
             <div className="flex flex-row flex-wrap items-baseline justify-start gap-2 sm:gap-3">
               <h1 className="min-w-0 text-3xl font-semibold leading-tight tracking-tight text-neutral-100 sm:text-4xl">
-                Your <span className="text-neutral-400">projects</span>
+                Your <span className="text-violet-400">projects</span>
               </h1>
-              <div className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-white/[0.1] bg-workspace-elevated px-3 py-1 text-xs font-medium leading-none text-neutral-300">
-                <SparklesGlyph className="h-3.5 w-3.5 text-neutral-400" />
+              <div className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-violet-500/35 bg-violet-500/10 px-3 py-1 text-xs font-medium leading-none text-violet-200">
+                <SparklesGlyph className="h-3.5 w-3.5 text-violet-400" />
                 Workspace
               </div>
             </div>
