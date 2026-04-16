@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
 import type { Phase } from '@prisma/client';
-import { PhaseCreateForm } from '@/features/phases/PhaseCreateForm';
+import { PhaseCreateSidebarRow } from '@/features/phases/PhaseCreateSidebarRow';
 import { TASK_LIST_TOGGLE_DATA_KEY } from '@/features/projects/plan-tasks-layout';
 import { ALL_TASKS_PANEL_QUERY_KEY, buildProjectPageHref } from '@/features/projects/project-plan-tasks-url';
 import { useProjectPlanTasks } from '@/features/projects/project-plan-tasks-context';
@@ -92,7 +91,6 @@ export function PhaseSidebarNav({
   activePhaseId: string | null;
   taskCounts: { main: number; byPhaseId: Record<string, number> };
 }) {
-  const [addOpen, setAddOpen] = useState(false);
   const { openTasksForPhase, openTasksPhaseId } = useProjectPlanTasks();
   const searchParams = useSearchParams();
   const preservedAllTasks = searchParams.get(ALL_TASKS_PANEL_QUERY_KEY);
@@ -101,29 +99,7 @@ export function PhaseSidebarNav({
   return (
     <nav aria-label="Phases" className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 py-3">
       <div className="shrink-0 px-1 pb-2">
-        <button
-          aria-expanded={addOpen}
-          className="group flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left text-sm font-medium text-neutral-400 transition hover:text-neutral-200"
-          onClick={() => setAddOpen((v) => !v)}
-          type="button"
-        >
-          <span
-            aria-hidden
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.02] text-base leading-none text-neutral-400 transition group-hover:border-white/12 group-hover:bg-white/[0.04] group-hover:text-neutral-300"
-          >
-            +
-          </span>
-          <span className="min-w-0 truncate">New phase</span>
-        </button>
-        {addOpen ? (
-          <div className="mt-2 rounded-lg border border-white/[0.08] bg-workspace-elevated p-2">
-            <PhaseCreateForm
-              onSuccess={() => setAddOpen(false)}
-              projectId={projectId}
-              variant="inline"
-            />
-          </div>
-        ) : null}
+        <PhaseCreateSidebarRow projectId={projectId} />
       </div>
       <div className="scrollbar-workspace-subtle min-h-0 flex-1 overflow-y-auto pt-2">
         <div className="flex flex-col gap-1.5 pr-0.5">
