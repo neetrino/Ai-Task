@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  startTransition,
-  useEffect,
-  useLayoutEffect,
-  useOptimistic,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -48,6 +41,45 @@ type ChatPostResponseJson = {
   ok?: boolean;
 };
 
+async function postProjectChatRequest(params: {
+  url: string;
+  signal: AbortSignal;
+  message: string;
+  phaseId: string | null;
+  router: { refresh: () => void };
+}): Promise<void> {
+  const { url, signal, message, phaseId, router } = params;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, phaseId }),
+      signal,
+    });
+
+    const data = (await res.json()) as ChatPostResponseJson;
+
+    if (!res.ok) {
+      toast.error(data.error ?? 'Request failed');
+      router.refresh();
+      return;
+    }
+    if (data.error) {
+      toast.error(data.error);
+      router.refresh();
+      return;
+    }
+    router.refresh();
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      router.refresh();
+      return;
+    }
+    toast.error('Network error');
+    router.refresh();
+  }
+}
+
 export function ProjectChatSection({
   initialMessages,
   projectSlug,
@@ -58,9 +90,22 @@ export function ProjectChatSection({
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const [optimisticMessages, addOptimistic] = useOptimistic(
-    initialMessages,
-    (state, newMessage: ChatMessageLine) => [...state, newMessage],
+  /** Local user bubble(s) shown immediately; cleared when server props catch up. */
+  const [pendingUserLines, setPendingUserLines] = useState<ChatMessageLine[]>([]);
+
+  const messagesVersion = useMemo(
+    () =>
+      `${phaseId ?? 'none'}:${initialMessages.length}:${initialMessages.at(-1)?.id ?? 'none'}`,
+    [phaseId, initialMessages],
+  );
+
+  useLayoutEffect(() => {
+    setPendingUserLines([]);
+  }, [messagesVersion]);
+
+  const displayMessages = useMemo(
+    () => [...initialMessages, ...pendingUserLines],
+    [initialMessages, pendingUserLines],
   );
 
   const [isSending, setIsSending] = useState(false);
@@ -71,7 +116,7 @@ export function ProjectChatSection({
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [optimisticMessages, isSending]);
+  }, [displayMessages, isSending]);
 
   useLayoutEffect(() => {
     const el = messageTextareaRef.current;
@@ -90,7 +135,7 @@ export function ProjectChatSection({
     abortRef.current?.abort();
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const message = draft.trim();
     if (!message || isSending) return;
@@ -99,52 +144,22 @@ export function ProjectChatSection({
     abortRef.current = controller;
     setIsSending(true);
     setDraft('');
-
-    startTransition(() => {
-      addOptimistic({
-        id: `optimistic-${crypto.randomUUID()}`,
-        role: 'user',
-        content: message,
-      });
-    });
+    setPendingUserLines([
+      { id: `local-${crypto.randomUUID()}`, role: 'user', content: message },
+    ]);
 
     const url = `/api/projects/${encodeURIComponent(projectSlug)}/chat`;
 
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message,
-          phaseId,
-        }),
-        signal: controller.signal,
-      });
-
-      const data = (await res.json()) as ChatPostResponseJson;
-
-      if (!res.ok) {
-        toast.error(data.error ?? 'Request failed');
-        router.refresh();
-        return;
-      }
-      if (data.error) {
-        toast.error(data.error);
-        router.refresh();
-        return;
-      }
-      router.refresh();
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        router.refresh();
-        return;
-      }
-      toast.error('Network error');
-      router.refresh();
-    } finally {
+    void postProjectChatRequest({
+      url,
+      signal: controller.signal,
+      message,
+      phaseId,
+      router,
+    }).finally(() => {
       setIsSending(false);
       abortRef.current = null;
-    }
+    });
   };
 
   return (
@@ -157,14 +172,14 @@ export function ProjectChatSection({
         ref={scrollRef}
       >
         <div className={`mx-auto w-full ${CHAT_CONTENT_MAX} px-5 pb-44 pt-4`}>
-          {optimisticMessages.length === 0 ? (
+          {displayMessages.length === 0 ? (
             <p className="py-8 text-center text-sm text-neutral-500">
               Describe your goal — the assistant will structure tasks and update the plan. Paste long specs
               or requirements in the same message field below when you need the plan to follow a document.
             </p>
           ) : (
             <div className="space-y-10">
-              {optimisticMessages.map((m) =>
+              {displayMessages.map((m) =>
                 m.role === 'user' ? (
                   <div className="flex justify-end" key={m.id}>
                     <div className="max-w-[min(100%,85%)] rounded-3xl bg-neutral-700 px-4 py-3 text-sm leading-relaxed text-neutral-100">
