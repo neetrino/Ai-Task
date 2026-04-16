@@ -100,17 +100,17 @@ export function PhaseSidebarNav({
 
   return (
     <nav aria-label="Phases" className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 py-3">
-      <p className="shrink-0 px-1 pb-2 text-[10px] font-medium uppercase tracking-wide text-neutral-500">
-        Phases
-      </p>
-      <div className="shrink-0 border-b border-workspace-hairline px-1 pb-3">
+      <div className="shrink-0 px-1 pb-2">
         <button
           aria-expanded={addOpen}
-          className="flex w-full items-center gap-2 rounded-xl border border-transparent px-2 py-2.5 text-left text-sm font-medium text-neutral-500 transition hover:bg-white/[0.04] hover:text-neutral-300"
+          className="group flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left text-sm font-medium text-neutral-400 transition hover:text-neutral-200"
           onClick={() => setAddOpen((v) => !v)}
           type="button"
         >
-          <span aria-hidden className="text-base leading-none">
+          <span
+            aria-hidden
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.02] text-base leading-none text-neutral-400 transition group-hover:border-white/12 group-hover:bg-white/[0.04] group-hover:text-neutral-300"
+          >
             +
           </span>
           <span className="min-w-0 truncate">New phase</span>
