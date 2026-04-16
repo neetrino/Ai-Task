@@ -1,8 +1,8 @@
-import { PrismaAdapter } from '@auth/prisma-adapter';
 import { AccessStatus } from '@prisma/client';
 import NextAuth from 'next-auth';
 import Email from 'next-auth/providers/email';
 import { Resend } from 'resend';
+import { createAuthPrismaAdapter } from '@/features/auth/prisma-auth-adapter';
 import { buildMagicLinkEmailContent } from '@/features/auth/magic-link-email-html';
 import { prisma } from '@/shared/lib/prisma';
 import { logger } from '@/shared/lib/logger';
@@ -18,7 +18,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: process.env.AUTH_TRUST_HOST === 'true' || process.env.VERCEL === '1',
-  adapter: PrismaAdapter(prisma),
+  adapter: createAuthPrismaAdapter(prisma),
   useSecureCookies: isProduction,
   session: {
     strategy: 'database',
