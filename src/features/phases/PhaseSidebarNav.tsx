@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import type { Phase } from '@prisma/client';
 import { PhaseCreateForm } from '@/features/phases/PhaseCreateForm';
 import { TASK_LIST_TOGGLE_DATA_KEY } from '@/features/projects/plan-tasks-layout';
+import { ALL_TASKS_PANEL_QUERY_KEY, buildProjectPageHref } from '@/features/projects/project-plan-tasks-url';
 import { useProjectPlanTasks } from '@/features/projects/project-plan-tasks-context';
 import { ListChecksGlyph } from '@/shared/ui/brand-icons';
 
@@ -89,6 +91,8 @@ export function PhaseSidebarNav({
 }) {
   const [addOpen, setAddOpen] = useState(false);
   const { openTasksForPhase } = useProjectPlanTasks();
+  const searchParams = useSearchParams();
+  const preservedAllTasks = searchParams.get(ALL_TASKS_PANEL_QUERY_KEY);
 
   return (
     <nav aria-label="Phases" className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 py-3">
@@ -98,7 +102,7 @@ export function PhaseSidebarNav({
       <div className="scrollbar-workspace-subtle min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-1.5 pr-0.5">
           <PhaseChatRow
-            href={`/app/projects/${projectSlug}`}
+            href={buildProjectPageHref(projectSlug, { allTasks: preservedAllTasks })}
             isActive={activePhaseId === null}
             label="Main"
             onOpenTasks={() => openTasksForPhase(null)}
@@ -108,7 +112,7 @@ export function PhaseSidebarNav({
           />
           {phases.map((p) => (
             <PhaseChatRow
-              href={`/app/projects/${projectSlug}?phase=${p.id}`}
+              href={buildProjectPageHref(projectSlug, { phaseId: p.id, allTasks: preservedAllTasks })}
               isActive={activePhaseId === p.id}
               key={p.id}
               label={p.label}

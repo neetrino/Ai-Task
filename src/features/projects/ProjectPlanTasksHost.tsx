@@ -11,13 +11,12 @@ import {
   updateTaskSyncInPlan,
   type FlatPlanTaskRow,
 } from '@/features/projects/plan-tasks-iterate';
-import { BITRIX_SYNC_CONFIRM_PORTAL_SELECTOR } from '@/features/bitrix-sync/BitrixSyncConfirmDialog';
 import { PlanTasksFullscreenModal } from '@/features/projects/PlanTasksFullscreenModal';
-import {
-  ALL_TASKS_PANEL_DOM_ID,
-  TASK_LIST_TOGGLE_SELECTOR,
-} from '@/features/projects/plan-tasks-layout';
 import { ProjectPlanTasksProvider } from '@/features/projects/project-plan-tasks-context';
+import {
+  type PlanTasksEditingTarget,
+  usePlanTasksPanelUrlSync,
+} from '@/features/projects/use-plan-tasks-panel-url-sync';
 import { logger } from '@/shared/lib/logger';
 import { toast } from 'sonner';
 
@@ -34,12 +33,6 @@ async function setPlanTaskSyncSelectedSafe(
     logger.error({ err: e, projectId }, 'setPlanTaskSyncSelected failed');
     return { error: e instanceof Error ? e.message : 'Request failed' };
   }
-}
-
-type EditingTarget = { epicIndex: number; taskIndex: number };
-
-function phasesMatch(a: string | null, b: string | null): boolean {
-  return a === b;
 }
 
 export function ProjectPlanTasksHost({
@@ -62,7 +55,7 @@ export function ProjectPlanTasksHost({
   const [planLoading, setPlanLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [editing, setEditing] = useState<EditingTarget | null>(null);
+  const [editing, setEditing] = useState<PlanTasksEditingTarget | null>(null);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftDescription, setDraftDescription] = useState('');
   const [savePending, startSaveTransition] = useTransition();
@@ -101,82 +94,21 @@ export function ProjectPlanTasksHost({
     [effectivePhaseId, phaseCacheKey],
   );
 
-  const closeModal = useCallback(() => {
-    setModalOpen(false);
-    setModalPlan(null);
-    setModalPhaseId(null);
-    setFetchError(null);
-    setSearch('');
-    setEditing(null);
-  }, []);
-
-  const openTasksForPhase = useCallback(
-    async (targetPhaseId: string | null) => {
-      if (modalOpen && phasesMatch(modalPhaseId, targetPhaseId)) {
-        closeModal();
-        return;
-      }
-
-      setFetchError(null);
-      setSearch('');
-      setEditing(null);
-      setModalPhaseId(targetPhaseId);
-      setModalOpen(true);
-
-      const sameAsActive = phasesMatch(targetPhaseId, activePhaseId);
-      if (sameAsActive) {
-        setModalPlan(null);
-        setPlanLoading(false);
-        return;
-      }
-
-      const cacheKey = phaseCacheKey(targetPhaseId);
-      const cached = phasePlanCacheRef.current.get(cacheKey);
-      if (cached) {
-        setModalPlan(cached);
-        setPlanLoading(false);
-        return;
-      }
-
-      setPlanLoading(true);
-      setModalPlan(null);
-      try {
-        const q = targetPhaseId ? `?phase=${encodeURIComponent(targetPhaseId)}` : '';
-        const res = await fetch(`/api/projects/${encodeURIComponent(projectSlug)}/plan${q}`);
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          const msg = typeof err?.error === 'string' ? err.error : 'Could not load plan';
-          throw new Error(msg);
-        }
-        const data: { plan: PlanPayload } = await res.json();
-        setModalPlan(data.plan);
-        phasePlanCacheRef.current.set(cacheKey, data.plan);
-      } catch (e) {
-        logger.error({ err: e }, 'project.plan.fetch');
-        const msg = e instanceof Error ? e.message : 'Could not load plan';
-        toast.error(msg);
-        setFetchError(msg);
-      } finally {
-        setPlanLoading(false);
-      }
-    },
-    [activePhaseId, closeModal, modalOpen, modalPhaseId, phaseCacheKey, projectSlug],
-  );
-
-  useEffect(() => {
-    if (!modalOpen) return;
-    const onPointerDownCapture = (e: PointerEvent) => {
-      const target = e.target;
-      if (!(target instanceof Node)) return;
-      const panel = document.getElementById(ALL_TASKS_PANEL_DOM_ID);
-      if (panel?.contains(target)) return;
-      if (target instanceof Element && target.closest(TASK_LIST_TOGGLE_SELECTOR)) return;
-      if (target instanceof Element && target.closest(BITRIX_SYNC_CONFIRM_PORTAL_SELECTOR)) return;
-      closeModal();
-    };
-    document.addEventListener('pointerdown', onPointerDownCapture, true);
-    return () => document.removeEventListener('pointerdown', onPointerDownCapture, true);
-  }, [modalOpen, closeModal]);
+  const { closeModal, openTasksForPhase } = usePlanTasksPanelUrlSync({
+    activePhaseId,
+    modalOpen,
+    modalPhaseId,
+    phaseCacheKey,
+    phasePlanCacheRef,
+    projectSlug,
+    setEditing,
+    setFetchError,
+    setModalOpen,
+    setModalPhaseId,
+    setModalPlan,
+    setPlanLoading,
+    setSearch,
+  });
 
   const beginEdit = useCallback((row: FlatPlanTaskRow) => {
     setEditing({ epicIndex: row.epicIndex, taskIndex: row.taskIndex });
