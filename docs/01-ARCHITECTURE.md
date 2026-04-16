@@ -10,7 +10,7 @@
 
 ### Purpose
 
-Replace ad-hoc chat + manual YAML editing with a **single web app**: authenticated users manage **projects** and **phases**, converse with AI to produce a structured plan (compatible with `plans/example.plan.yaml`), edit tasks in the UI, export **Markdown** for developers, and trigger **Bitrix sync** using team secrets and per-project Bitrix IDs.
+Replace ad-hoc chat + manual YAML editing with a **single web app**: authenticated users manage **projects** and **phases**, converse with AI to produce a structured plan (schema in `src/shared/domain/plan.ts`), edit tasks in the UI, export **Markdown** for developers, and trigger **Bitrix sync** using team secrets and per-project Bitrix IDs.
 
 ### Users
 
@@ -64,7 +64,7 @@ Replace ad-hoc chat + manual YAML editing with a **single web app**: authenticat
 ### Backend (same Next.js process)
 
 - **Auth.js** — session in DB; middleware protects `/app/*` routes.
-- **AI orchestration** — server-only calls to OpenAI; prompts enforce YAML schema aligned with `plans/example.plan.yaml`.
+- **AI orchestration** — server-only calls to OpenAI; prompts enforce plan schema (`src/shared/domain/plan.ts`).
 - **Bitrix sync** — `src/server/bitrix/*` invoked with `Webhook_URL` from env and per-project IDs from the database.
 
 ### Database (Neon + Prisma)
@@ -108,7 +108,6 @@ src/
     lib/                  # logger, env, utils
     config/               # constants
   server/                 # optional: services only used on server
-plans/                    # example plans / YAML contract reference
 prisma/
   schema.prisma
 ```
@@ -162,7 +161,7 @@ prisma/
 - `docs/02-TECH_SPEC.md` — functional requirements and acceptance criteria.
 - `docs/BRIEF.md` — product brief.
 - `docs/DECISIONS.md` — ADRs (Neon, Auth.js, feature layout, secrets).
-- `.cursor/rules/bitrix24-workflow.mdc` — Markdown → YAML → Bitrix workflow for CLI.
+- `.cursor/rules/bitrix24-workflow.mdc` — Bitrix sync workflow.
 
 ---
 

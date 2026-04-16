@@ -10,11 +10,11 @@
 
 1. Provide a **hosted** (Vercel) application for the whole team.
 2. **Authenticate** users (Auth.js); persist **projects**, **phases**, **chat history**, and **plan state**.
-3. Use **AI** (OpenAI, server-side) to generate and refine task plans matching the existing **YAML contract** (`epic_mode`, `epics`, tasks with `title` / `description`).
+3. Use **AI** (OpenAI, server-side) to generate and refine task plans matching the plan schema (`epic_mode`, `epics`, tasks with `title` / `description`).
 4. Allow **per-project** Bitrix parameters stored in the database (`bitrixProjectId`, `taskOwnerId`, `taskAssigneeId`).
 5. Keep **webhook** and **OpenAI API key** as deployment secrets (not stored per row in UI as plain text for webhook).
 6. **Export** a single **Markdown** file for developers (VS Code workflow).
-7. **Sync to Bitrix** via existing REST webhook flow (`src/server/bitrix/*`, same YAML/plan contract as `plans/example.plan.yaml`).
+7. **Sync to Bitrix** via existing REST webhook flow (`src/server/bitrix/*`, plan schema in `src/shared/domain/plan.ts`).
 
 ---
 
@@ -44,7 +44,7 @@
 ### P2 — Could have
 
 | US-12 | YAML download as well as MD | Matches `example.plan.yaml` shape |
-| US-13 | Dry-run before sync | Same as CLI `--dry-run` |
+| US-13 | Dry-run before sync | Preview sync outcome before committing |
 
 ---
 
@@ -68,7 +68,7 @@
 
 ### 3.4 AI chat
 
-- System prompt includes YAML schema summary and examples from `plans/example.plan.yaml`.
+- System prompt includes plan schema summary and examples (based on `src/shared/domain/plan.ts`).
 - Model output must be **parsed and validated**; invalid output → user-visible error and retry suggestion.
 - **Rate limiting** on AI endpoint (configurable).
 
@@ -123,6 +123,6 @@
 
 | Spec section | Implementation artifact |
 |--------------|---------------------------|
-| YAML contract | `plans/example.plan.yaml`, `src/shared/domain/plan.ts` |
+| Plan schema | `src/shared/domain/plan.ts` |
 | Workflow | `.cursor/rules/bitrix24-workflow.mdc` |
 | Stack | `docs/TECH_CARD.md` |

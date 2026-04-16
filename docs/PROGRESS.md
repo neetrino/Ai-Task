@@ -1,6 +1,6 @@
 # Development progress — PlanRelay / Bitrix24-Task
 
-**Project.** PlanRelay (web) + Bitrix24 sync CLI  
+**Project.** PlanRelay (web)  
 **Phase.** Core web app + integrations  
 **Overall progress.** ~65% (MVP scaffolded; production hardening ongoing)
 
@@ -31,7 +31,7 @@
 - [x] `docs/02-TECH_SPEC.md` — functional/technical specification
 - [x] `docs/BRIEF.md` — product brief
 - [x] `docs/DECISIONS.md` — ADRs
-- [x] CLI sync script and `plans/example.plan.yaml` (pre-existing)
+- [x] Plan schema (`src/shared/domain/plan.ts`)
 
 ### Phase 2–4 (implementation)
 

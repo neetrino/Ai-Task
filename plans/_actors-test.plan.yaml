@@ -1,9 +1,0 @@
-# Одноразовый тест: owner / assignee / чат задачи
-project_title: '_actors test'
-epic_mode: scrum
-epics:
-  - name: 'Test sync'
-    description: 'Удалите эпик и задачу после проверки.'
-    tasks:
-      - title: 'TEST: owner + assignee из .env'
-        description: 'Проверка CREATED_BY, RESPONSIBLE_ID и чата задачи.'

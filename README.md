@@ -41,10 +41,6 @@ pnpm dev
 
 ---
 
-## Черновики планов в `plans/`
-
-**Черновик** удобно вести в **`plans/*.md`** — шаблон `plans/example-plan.md` (заголовки `##` = эпики, списки = задачи). Файлы вида `*.plan.md` открываются как Markdown — см. `.vscode/settings.json`. **YAML** (`plans/example.plan.yaml`) — контракт для парсера и синка в приложении. Подробнее — `.cursor/rules/bitrix24-workflow.mdc`.
-
 ## `.env`
 
 | Переменная    | Описание                                      |
