@@ -96,10 +96,32 @@ export function PhaseSidebarNav({
 
   return (
     <nav aria-label="Phases" className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 py-3">
-      <p className="shrink-0 px-1 pb-3 text-[10px] font-medium uppercase tracking-wide text-neutral-500">
+      <p className="shrink-0 px-1 pb-2 text-[10px] font-medium uppercase tracking-wide text-neutral-500">
         Phases
       </p>
-      <div className="scrollbar-workspace-subtle min-h-0 flex-1 overflow-y-auto">
+      <div className="shrink-0 border-b border-workspace-hairline px-1 pb-3">
+        <button
+          aria-expanded={addOpen}
+          className="flex w-full items-center gap-2 rounded-xl border border-transparent px-2 py-2.5 text-left text-sm font-medium text-neutral-500 transition hover:bg-white/[0.04] hover:text-neutral-300"
+          onClick={() => setAddOpen((v) => !v)}
+          type="button"
+        >
+          <span aria-hidden className="text-base leading-none">
+            +
+          </span>
+          <span className="min-w-0 truncate">New phase</span>
+        </button>
+        {addOpen ? (
+          <div className="mt-2 rounded-lg border border-white/[0.08] bg-workspace-elevated p-2">
+            <PhaseCreateForm
+              onSuccess={() => setAddOpen(false)}
+              projectId={projectId}
+              variant="inline"
+            />
+          </div>
+        ) : null}
+      </div>
+      <div className="scrollbar-workspace-subtle min-h-0 flex-1 overflow-y-auto pt-2">
         <div className="flex flex-col gap-1.5 pr-0.5">
           <PhaseChatRow
             href={buildProjectPageHref(projectSlug, { allTasks: preservedAllTasks })}
@@ -123,28 +145,6 @@ export function PhaseSidebarNav({
             />
           ))}
         </div>
-      </div>
-      <div className="shrink-0 border-t border-workspace-hairline pt-3">
-        <button
-          aria-expanded={addOpen}
-          className="flex w-full items-center gap-2 rounded-xl border border-transparent px-2 py-2.5 text-left text-sm font-medium text-neutral-500 transition hover:bg-white/[0.04] hover:text-neutral-300"
-          onClick={() => setAddOpen((v) => !v)}
-          type="button"
-        >
-          <span aria-hidden className="text-base leading-none">
-            +
-          </span>
-          <span className="min-w-0 truncate">New phase</span>
-        </button>
-        {addOpen ? (
-          <div className="mt-2 rounded-lg border border-white/[0.08] bg-workspace-elevated p-2">
-            <PhaseCreateForm
-              onSuccess={() => setAddOpen(false)}
-              projectId={projectId}
-              variant="inline"
-            />
-          </div>
-        ) : null}
       </div>
     </nav>
   );

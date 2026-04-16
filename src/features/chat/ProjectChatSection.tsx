@@ -7,6 +7,7 @@ import {
   AssistantPendingRow,
   SendOrStopControl,
 } from '@/features/chat/ProjectChatComposerControls';
+import { SiteLogoImage } from '@/shared/ui/site-logo';
 
 export type ChatMessageLine = {
   id: string;
@@ -15,6 +16,9 @@ export type ChatMessageLine = {
 };
 
 const CHAT_CONTENT_MAX = 'max-w-3xl';
+
+/** Empty state — logo mark above the composer (Claude-style). */
+const EMPTY_CHAT_LOGO_HEIGHT_PX = 80;
 
 /** Single-line row height; matches min-h + vertical padding in the composer. */
 const CHAT_INPUT_MIN_HEIGHT_PX = 44;
@@ -168,16 +172,20 @@ export function ProjectChatSection({
       onSubmit={handleSubmit}
     >
       <div
-        className="scrollbar-workspace-subtle min-h-0 flex-1 overflow-y-auto"
+        className="scrollbar-workspace-subtle flex min-h-0 flex-1 flex-col overflow-y-auto"
         ref={scrollRef}
       >
-        <div className={`mx-auto w-full ${CHAT_CONTENT_MAX} px-5 pb-44 pt-4`}>
-          {displayMessages.length === 0 ? (
-            <p className="py-8 text-center text-sm text-neutral-500">
-              Describe your goal — the assistant will structure tasks and update the plan. Paste long specs
-              or requirements in the same message field below when you need the plan to follow a document.
-            </p>
-          ) : (
+        {displayMessages.length === 0 ? (
+          <div
+            className={`mx-auto flex w-full flex-1 flex-col items-center justify-center px-5 pb-44 pt-6 ${CHAT_CONTENT_MAX}`}
+          >
+            <SiteLogoImage
+              className="h-20 w-auto opacity-95"
+              heightPx={EMPTY_CHAT_LOGO_HEIGHT_PX}
+            />
+          </div>
+        ) : (
+          <div className={`mx-auto w-full ${CHAT_CONTENT_MAX} px-5 pb-44 pt-4`}>
             <div className="space-y-10">
               {displayMessages.map((m) =>
                 m.role === 'user' ? (
@@ -197,8 +205,8 @@ export function ProjectChatSection({
               )}
               <AssistantPendingRow pending={isSending} />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div
