@@ -1,6 +1,14 @@
 'use client';
 
-import { useActionState, useEffect, useOptimistic, useRef, useState, useTransition } from 'react';
+import {
+  useActionState,
+  useEffect,
+  useLayoutEffect,
+  useOptimistic,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { sendChatMessage } from '@/features/chat/chat-actions';
@@ -12,6 +20,13 @@ export type ChatMessageLine = {
 };
 
 const CHAT_CONTENT_MAX = 'max-w-3xl';
+
+/** Single-line row height; matches min-h + vertical padding in the composer. */
+const CHAT_INPUT_MIN_HEIGHT_PX = 44;
+/** Cap growth so the docked composer does not cover the whole viewport. */
+const CHAT_INPUT_MAX_HEIGHT_PX = 400;
+/** Covers subpixel / line-height rounding so 2 lines do not falsely show a scrollbar. */
+const CHAT_INPUT_SCROLL_HEIGHT_BUFFER_PX = 4;
 
 function SendControl({ pending }: { pending: boolean }) {
   return (
@@ -90,7 +105,7 @@ export function ProjectChatSection({
   const [isPending, startTransition] = useTransition();
 
   const [draft, setDraft] = useState('');
-  const [pastedDraft, setPastedDraft] = useState('');
+  const messageTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -109,6 +124,19 @@ export function ProjectChatSection({
     router.refresh();
   }, [state?.error, router]);
 
+  useLayoutEffect(() => {
+    const el = messageTextareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const intrinsic = el.scrollHeight;
+    const nextHeight = Math.min(
+      Math.max(intrinsic + CHAT_INPUT_SCROLL_HEIGHT_BUFFER_PX, CHAT_INPUT_MIN_HEIGHT_PX),
+      CHAT_INPUT_MAX_HEIGHT_PX,
+    );
+    el.style.height = `${nextHeight}px`;
+    el.style.overflowY = el.scrollHeight > el.clientHeight ? 'auto' : 'hidden';
+  }, [draft]);
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const message = draft.trim();
@@ -116,9 +144,7 @@ export function ProjectChatSection({
 
     const fd = new FormData();
     fd.set('message', message);
-    fd.set('pastedContext', pastedDraft.trim());
     setDraft('');
-    setPastedDraft('');
     startTransition(() => {
       addOptimistic({
         id: `optimistic-${crypto.randomUUID()}`,
@@ -141,9 +167,8 @@ export function ProjectChatSection({
         <div className={`mx-auto w-full ${CHAT_CONTENT_MAX} px-5 pb-44 pt-4`}>
           {optimisticMessages.length === 0 ? (
             <p className="py-8 text-center text-sm text-neutral-500">
-              Describe your goal — the assistant will structure tasks and update the plan. You can paste
-              specs under <span className="text-neutral-400">Optional context</span> so the plan reflects
-              your document.
+              Describe your goal — the assistant will structure tasks and update the plan. Paste long specs
+              or requirements in the same message field below when you need the plan to follow a document.
             </p>
           ) : (
             <div className="space-y-10">
@@ -175,21 +200,13 @@ export function ProjectChatSection({
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-5 pt-6">
         <div className={`pointer-events-auto w-full ${CHAT_CONTENT_MAX}`}>
-          <div className="flex w-full flex-col gap-2">
-            <div className="flex w-full items-end gap-2 rounded-[1.75rem] border border-white/[0.1] bg-workspace-elevated px-3 py-2.5 shadow-none">
-              <button
-                className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg leading-none text-neutral-500 transition hover:bg-white/[0.06] hover:text-neutral-300"
-                disabled
-                title="Attachments (coming soon)"
-                type="button"
-              >
-                +
-              </button>
+          <div className="flex w-full flex-col">
+            <div className="flex w-full min-w-0 flex-col rounded-[1.75rem] border border-white/[0.1] bg-workspace-elevated px-3 pb-2 pt-3 shadow-none">
               <label className="sr-only" htmlFor="project-chat-message">
                 Message
               </label>
               <textarea
-                className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent py-2.5 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0"
+                className="scrollbar-chat-composer-hidden box-border min-h-[44px] w-full min-w-0 resize-none bg-transparent px-0.5 py-0 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0"
                 id="project-chat-message"
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
@@ -198,37 +215,37 @@ export function ProjectChatSection({
                     e.currentTarget.form?.requestSubmit();
                   }
                 }}
-                placeholder="Reply…"
+                placeholder="Describe your goal or paste specs…"
+                ref={messageTextareaRef}
                 rows={1}
+                style={{
+                  maxHeight: CHAT_INPUT_MAX_HEIGHT_PX,
+                  minHeight: CHAT_INPUT_MIN_HEIGHT_PX,
+                }}
                 value={draft}
               />
-              <div className="mb-1 flex shrink-0 items-center gap-2 pl-1">
-                <span
-                  className="max-w-[6.5rem] truncate text-right text-[10px] text-neutral-500 sm:max-w-[10rem] sm:text-[11px]"
-                  title={activeModel}
+              <div className="mt-2 flex min-h-[40px] w-full min-w-0 shrink-0 items-center gap-3 pt-0.5">
+                <button
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg leading-none text-neutral-500 transition hover:bg-white/[0.06] hover:text-neutral-300"
+                  disabled
+                  title="Attachments (coming soon)"
+                  type="button"
                 >
-                  {formatModelLabel(activeModel)}
-                </span>
-                <SendControl pending={isPending} />
+                  +
+                </button>
+                <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                  <span
+                    className="min-w-0 truncate text-right text-[10px] text-neutral-500 sm:text-[11px]"
+                    title={activeModel}
+                  >
+                    {formatModelLabel(activeModel)}
+                  </span>
+                  <div className="shrink-0">
+                    <SendControl pending={isPending} />
+                  </div>
+                </div>
               </div>
             </div>
-
-            <details className="group px-1 text-xs text-neutral-500">
-              <summary className="cursor-pointer select-none list-none text-neutral-500 hover:text-neutral-300 [&::-webkit-details-marker]:hidden">
-                Optional context
-              </summary>
-              <label className="sr-only" htmlFor="pastedContext">
-                Optional pasted text
-              </label>
-              <textarea
-                className="mt-2 min-h-[64px] w-full rounded-xl border border-white/[0.08] bg-workspace-canvas px-3 py-2 text-sm text-neutral-200 placeholder:text-neutral-500 focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-white/10"
-                id="pastedContext"
-                onChange={(e) => setPastedDraft(e.target.value)}
-                placeholder="Paste specs, doc excerpts, or requirements (optional)"
-                rows={3}
-                value={pastedDraft}
-              />
-            </details>
           </div>
         </div>
       </div>

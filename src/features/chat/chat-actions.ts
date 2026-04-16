@@ -21,15 +21,11 @@ export async function sendChatMessage(
   await enforceRateLimit(`chat:${userId}`);
 
   const text = formData.get('message');
-  const pasted = formData.get('pastedContext');
   if (typeof text !== 'string' || !text.trim()) {
     return { error: 'Message is required' };
   }
 
-  let composed = text.trim();
-  if (typeof pasted === 'string' && pasted.trim()) {
-    composed = `${composed}\n\n---\nAttached context:\n${pasted.trim()}`;
-  }
+  const composed = text.trim();
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, ownerId: userId },
