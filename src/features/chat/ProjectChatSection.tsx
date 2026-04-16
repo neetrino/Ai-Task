@@ -1,9 +1,12 @@
 'use client';
 
-import { useActionState, useEffect, useOptimistic, useRef, useState, useTransition } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { sendChatMessage } from '@/features/chat/chat-actions';
+import {
+  AssistantPendingRow,
+  SendOrStopControl,
+} from '@/features/chat/ProjectChatComposerControls';
 
 export type ChatMessageLine = {
   id: string;
@@ -13,48 +16,12 @@ export type ChatMessageLine = {
 
 const CHAT_CONTENT_MAX = 'max-w-3xl';
 
-function SendControl({ pending }: { pending: boolean }) {
-  return (
-    <button
-      aria-label="Send message"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-900 transition hover:bg-white disabled:opacity-50"
-      disabled={pending}
-      type="submit"
-    >
-      {pending ? (
-        <span className="text-xs">…</span>
-      ) : (
-        <svg aria-hidden className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-          <path
-            d="M12 19V5m0 0l-7 7m7-7l7 7"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-          />
-        </svg>
-      )}
-    </button>
-  );
-}
-
-function AssistantPendingRow({ pending }: { pending: boolean }) {
-  if (!pending) return null;
-  return (
-    <div className="text-sm leading-relaxed text-neutral-400">
-      <span className="mb-2 block text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
-        Assistant
-      </span>
-      <span className="inline-flex items-center gap-2">
-        <span
-          aria-hidden
-          className="inline-block h-2 w-2 animate-pulse rounded-full bg-neutral-500"
-        />
-        Updating plan…
-      </span>
-    </div>
-  );
-}
+/** Single-line row height; matches min-h + vertical padding in the composer. */
+const CHAT_INPUT_MIN_HEIGHT_PX = 44;
+/** Cap growth so the docked composer does not cover the whole viewport. */
+const CHAT_INPUT_MAX_HEIGHT_PX = 400;
+/** Covers subpixel / line-height rounding so 2 lines do not falsely show a scrollbar. */
+const CHAT_INPUT_SCROLL_HEIGHT_BUFFER_PX = 4;
 
 function formatModelLabel(id: string): string {
   if (id.length <= 28) return id;
@@ -63,69 +30,135 @@ function formatModelLabel(id: string): string {
 
 type ProjectChatSectionProps = {
   initialMessages: ChatMessageLine[];
-  projectId: string;
+  projectSlug: string;
   phaseId: string | null;
   activeModel: string;
 };
 
+type ChatPostResponseJson = {
+  error?: string;
+  cancelled?: boolean;
+  ok?: boolean;
+};
+
+async function postProjectChatRequest(params: {
+  url: string;
+  signal: AbortSignal;
+  message: string;
+  phaseId: string | null;
+  router: { refresh: () => void };
+}): Promise<void> {
+  const { url, signal, message, phaseId, router } = params;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, phaseId }),
+      signal,
+    });
+
+    const data = (await res.json()) as ChatPostResponseJson;
+
+    if (!res.ok) {
+      toast.error(data.error ?? 'Request failed');
+      router.refresh();
+      return;
+    }
+    if (data.error) {
+      toast.error(data.error);
+      router.refresh();
+      return;
+    }
+    router.refresh();
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      router.refresh();
+      return;
+    }
+    toast.error('Network error');
+    router.refresh();
+  }
+}
+
 export function ProjectChatSection({
   initialMessages,
-  projectId,
+  projectSlug,
   phaseId,
   activeModel,
 }: ProjectChatSectionProps) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const chatErrorToastedRef = useRef<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const [optimisticMessages, addOptimistic] = useOptimistic(
-    initialMessages,
-    (state, newMessage: ChatMessageLine) => [...state, newMessage],
+  /** Local user bubble(s) shown immediately; cleared when server props catch up. */
+  const [pendingUserLines, setPendingUserLines] = useState<ChatMessageLine[]>([]);
+
+  const messagesVersion = useMemo(
+    () =>
+      `${phaseId ?? 'none'}:${initialMessages.length}:${initialMessages.at(-1)?.id ?? 'none'}`,
+    [phaseId, initialMessages],
   );
 
-  const wrappedAction = async (prev: unknown, formData: FormData) =>
-    sendChatMessage(projectId, phaseId, prev, formData);
+  useLayoutEffect(() => {
+    setPendingUserLines([]);
+  }, [messagesVersion]);
 
-  const [state, formAction] = useActionState(wrappedAction, undefined);
-  const [isPending, startTransition] = useTransition();
+  const displayMessages = useMemo(
+    () => [...initialMessages, ...pendingUserLines],
+    [initialMessages, pendingUserLines],
+  );
 
+  const [isSending, setIsSending] = useState(false);
   const [draft, setDraft] = useState('');
-  const [pastedDraft, setPastedDraft] = useState('');
+  const messageTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [optimisticMessages, state, isPending]);
+  }, [displayMessages, isSending]);
 
-  useEffect(() => {
-    if (!state?.error) {
-      chatErrorToastedRef.current = null;
-      return;
-    }
-    if (chatErrorToastedRef.current === state.error) return;
-    chatErrorToastedRef.current = state.error;
-    toast.error(state.error);
-    router.refresh();
-  }, [state?.error, router]);
+  useLayoutEffect(() => {
+    const el = messageTextareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const intrinsic = el.scrollHeight;
+    const nextHeight = Math.min(
+      Math.max(intrinsic + CHAT_INPUT_SCROLL_HEIGHT_BUFFER_PX, CHAT_INPUT_MIN_HEIGHT_PX),
+      CHAT_INPUT_MAX_HEIGHT_PX,
+    );
+    el.style.height = `${nextHeight}px`;
+    el.style.overflowY = el.scrollHeight > el.clientHeight ? 'auto' : 'hidden';
+  }, [draft]);
+
+  const handleStop = () => {
+    abortRef.current?.abort();
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const message = draft.trim();
-    if (!message) return;
+    if (!message || isSending) return;
 
-    const fd = new FormData();
-    fd.set('message', message);
-    fd.set('pastedContext', pastedDraft.trim());
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setIsSending(true);
     setDraft('');
-    setPastedDraft('');
-    startTransition(() => {
-      addOptimistic({
-        id: `optimistic-${crypto.randomUUID()}`,
-        role: 'user',
-        content: message,
-      });
-      void formAction(fd);
+    setPendingUserLines([
+      { id: `local-${crypto.randomUUID()}`, role: 'user', content: message },
+    ]);
+
+    const url = `/api/projects/${encodeURIComponent(projectSlug)}/chat`;
+
+    void postProjectChatRequest({
+      url,
+      signal: controller.signal,
+      message,
+      phaseId,
+      router,
+    }).finally(() => {
+      setIsSending(false);
+      abortRef.current = null;
     });
   };
 
@@ -139,15 +172,14 @@ export function ProjectChatSection({
         ref={scrollRef}
       >
         <div className={`mx-auto w-full ${CHAT_CONTENT_MAX} px-5 pb-44 pt-4`}>
-          {optimisticMessages.length === 0 ? (
+          {displayMessages.length === 0 ? (
             <p className="py-8 text-center text-sm text-neutral-500">
-              Describe your goal — the assistant will structure tasks and update the plan. You can paste
-              specs under <span className="text-neutral-400">Optional context</span> so the plan reflects
-              your document.
+              Describe your goal — the assistant will structure tasks and update the plan. Paste long specs
+              or requirements in the same message field below when you need the plan to follow a document.
             </p>
           ) : (
             <div className="space-y-10">
-              {optimisticMessages.map((m) =>
+              {displayMessages.map((m) =>
                 m.role === 'user' ? (
                   <div className="flex justify-end" key={m.id}>
                     <div className="max-w-[min(100%,85%)] rounded-3xl bg-neutral-700 px-4 py-3 text-sm leading-relaxed text-neutral-100">
@@ -163,7 +195,7 @@ export function ProjectChatSection({
                   </div>
                 ),
               )}
-              <AssistantPendingRow pending={isPending} />
+              <AssistantPendingRow pending={isSending} />
             </div>
           )}
         </div>
@@ -175,60 +207,54 @@ export function ProjectChatSection({
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-5 pt-6">
         <div className={`pointer-events-auto w-full ${CHAT_CONTENT_MAX}`}>
-          <div className="flex w-full flex-col gap-2">
-            <div className="flex w-full items-end gap-2 rounded-[1.75rem] border border-white/[0.1] bg-workspace-elevated px-3 py-2.5 shadow-none">
-              <button
-                className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg leading-none text-neutral-500 transition hover:bg-white/[0.06] hover:text-neutral-300"
-                disabled
-                title="Attachments (coming soon)"
-                type="button"
-              >
-                +
-              </button>
+          <div className="flex w-full flex-col">
+            <div className="flex w-full min-w-0 flex-col rounded-[1.75rem] border border-white/[0.1] bg-workspace-elevated px-3 pb-2 pt-3 shadow-none">
               <label className="sr-only" htmlFor="project-chat-message">
                 Message
               </label>
               <textarea
-                className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent py-2.5 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0"
+                className="scrollbar-chat-composer-hidden box-border min-h-[44px] w-full min-w-0 resize-none bg-transparent px-0.5 py-0 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0"
                 id="project-chat-message"
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    e.currentTarget.form?.requestSubmit();
+                    if (!isSending) {
+                      e.currentTarget.form?.requestSubmit();
+                    }
                   }
                 }}
-                placeholder="Reply…"
+                placeholder="Describe your goal or paste specs…"
+                ref={messageTextareaRef}
                 rows={1}
+                style={{
+                  maxHeight: CHAT_INPUT_MAX_HEIGHT_PX,
+                  minHeight: CHAT_INPUT_MIN_HEIGHT_PX,
+                }}
                 value={draft}
               />
-              <div className="mb-1 flex shrink-0 items-center gap-2 pl-1">
-                <span
-                  className="max-w-[6.5rem] truncate text-right text-[10px] text-neutral-500 sm:max-w-[10rem] sm:text-[11px]"
-                  title={activeModel}
+              <div className="mt-2 flex min-h-[40px] w-full min-w-0 shrink-0 items-center gap-3 pt-0.5">
+                <button
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg leading-none text-neutral-500 transition hover:bg-white/[0.06] hover:text-neutral-300"
+                  disabled
+                  title="Attachments (coming soon)"
+                  type="button"
                 >
-                  {formatModelLabel(activeModel)}
-                </span>
-                <SendControl pending={isPending} />
+                  +
+                </button>
+                <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                  <span
+                    className="min-w-0 truncate text-right text-[10px] text-neutral-500 sm:text-[11px]"
+                    title={activeModel}
+                  >
+                    {formatModelLabel(activeModel)}
+                  </span>
+                  <div className="shrink-0">
+                    <SendOrStopControl onStop={handleStop} pending={isSending} />
+                  </div>
+                </div>
               </div>
             </div>
-
-            <details className="group px-1 text-xs text-neutral-500">
-              <summary className="cursor-pointer select-none list-none text-neutral-500 hover:text-neutral-300 [&::-webkit-details-marker]:hidden">
-                Optional context
-              </summary>
-              <label className="sr-only" htmlFor="pastedContext">
-                Optional pasted text
-              </label>
-              <textarea
-                className="mt-2 min-h-[64px] w-full rounded-xl border border-white/[0.08] bg-workspace-canvas px-3 py-2 text-sm text-neutral-200 placeholder:text-neutral-500 focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-white/10"
-                id="pastedContext"
-                onChange={(e) => setPastedDraft(e.target.value)}
-                placeholder="Paste specs, doc excerpts, or requirements (optional)"
-                rows={3}
-                value={pastedDraft}
-              />
-            </details>
           </div>
         </div>
       </div>

@@ -80,4 +80,16 @@ body {
   .scrollbar-workspace-subtle:hover::-webkit-scrollbar-thumb {
     background-color: var(--scrollbar-thumb-hover);
   }
+
+  /**
+   * Chat composer textarea: keep overflow scroll (wheel / touch / keyboard) but hide track/thumb.
+   */
+  .scrollbar-chat-composer-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-chat-composer-hidden::-webkit-scrollbar {
+    display: none;
+  }
 }

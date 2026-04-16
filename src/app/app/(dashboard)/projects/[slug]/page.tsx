@@ -111,7 +111,7 @@ export default async function ProjectPage({
               activeModel={effectiveChatModel}
               initialMessages={chatLines}
               phaseId={activePhaseId}
-              projectId={project.id}
+              projectSlug={project.slug}
             />
           </section>
         </div>
