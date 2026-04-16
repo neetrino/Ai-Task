@@ -203,6 +203,19 @@ async function runChatPreflight(
     },
   });
 
+  const now = new Date();
+  if (phaseId) {
+    await prisma.phase.updateMany({
+      where: { id: phaseId, projectId },
+      data: { lastUsedAt: now },
+    });
+  } else {
+    await prisma.project.update({
+      where: { id: projectId },
+      data: { mainLastUsedAt: now },
+    });
+  }
+
   // Revalidate eagerly so any subsequent `router.refresh()` (success, error
   // or abort path) surfaces the newly persisted user message.
   revalidateProject();

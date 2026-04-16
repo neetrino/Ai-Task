@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import type { Phase } from '@prisma/client';
+import { touchPhaseActivity } from '@/features/phases/phase-actions';
+import type { PhaseRailEntry } from '@/features/phases/phase-rail-order';
 import { PhaseCreateSidebarRow } from '@/features/phases/PhaseCreateSidebarRow';
 import { TASK_LIST_TOGGLE_DATA_KEY } from '@/features/projects/plan-tasks-layout';
 import { ALL_TASKS_PANEL_QUERY_KEY, buildProjectPageHref } from '@/features/projects/project-plan-tasks-url';
@@ -33,6 +34,7 @@ function PhaseChatRow({
   isTasksPanelOpen,
   href,
   label,
+  onPhaseNavigate,
   taskCount,
   onOpenTasks,
   tasksAriaLabel,
@@ -42,6 +44,7 @@ function PhaseChatRow({
   isTasksPanelOpen: boolean;
   href: string;
   label: string;
+  onPhaseNavigate?: () => void;
   taskCount: number;
   onOpenTasks: () => void;
   tasksAriaLabel: string;
@@ -53,6 +56,7 @@ function PhaseChatRow({
         <Link
           className={`min-w-0 flex-1 truncate rounded-lg px-1 py-0.5 text-left text-sm leading-snug transition ${isActive ? LINK_ACTIVE : LINK_IDLE}`}
           href={href}
+          onClick={() => onPhaseNavigate?.()}
         >
           {label}
         </Link>
@@ -81,13 +85,13 @@ function PhaseChatRow({
 export function PhaseSidebarNav({
   projectId,
   projectSlug,
-  phases,
+  phaseRail,
   activePhaseId,
   taskCounts,
 }: {
   projectId: string;
   projectSlug: string;
-  phases: Phase[];
+  phaseRail: PhaseRailEntry[];
   activePhaseId: string | null;
   taskCounts: { main: number; byPhaseId: Record<string, number> };
 }) {
@@ -99,33 +103,47 @@ export function PhaseSidebarNav({
   return (
     <nav aria-label="Phases" className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 py-3">
       <div className="shrink-0 px-1 pb-2">
-        <PhaseCreateSidebarRow projectId={projectId} />
+        <PhaseCreateSidebarRow projectId={projectId} projectSlug={projectSlug} />
       </div>
       <div className="scrollbar-workspace-subtle min-h-0 flex-1 overflow-y-auto pt-2">
         <div className="flex flex-col gap-1.5 pr-0.5">
-          <PhaseChatRow
-            href={buildProjectPageHref(projectSlug, { allTasks: preservedAllTasks })}
-            isActive={activePhaseId === null}
-            isTasksPanelOpen={isTasksPanelOpenForMain}
-            label="Main"
-            onOpenTasks={() => openTasksForPhase(null)}
-            taskCount={taskCounts.main}
-            tasksAriaLabel={`Tasks for Main, ${taskCounts.main} tasks`}
-            tasksTitle="Open task list for Main"
-          />
-          {phases.map((p) => (
-            <PhaseChatRow
-              href={buildProjectPageHref(projectSlug, { phaseId: p.id, allTasks: preservedAllTasks })}
-              isActive={activePhaseId === p.id}
-              isTasksPanelOpen={openTasksPhaseId === p.id}
-              key={p.id}
-              label={p.label}
-              onOpenTasks={() => openTasksForPhase(p.id)}
-              taskCount={taskCounts.byPhaseId[p.id] ?? 0}
-              tasksAriaLabel={`Tasks for ${p.label}, ${taskCounts.byPhaseId[p.id] ?? 0} tasks`}
-              tasksTitle={`Open task list for ${p.label}`}
-            />
-          ))}
+          {phaseRail.map((entry) => {
+            if (entry.kind === 'main') {
+              return (
+                <PhaseChatRow
+                  href={buildProjectPageHref(projectSlug, { allTasks: preservedAllTasks })}
+                  isActive={activePhaseId === null}
+                  isTasksPanelOpen={isTasksPanelOpenForMain}
+                  key="main"
+                  label="Main"
+                  onOpenTasks={() => openTasksForPhase(null)}
+                  onPhaseNavigate={() => {
+                    void touchPhaseActivity(projectId, null);
+                  }}
+                  taskCount={taskCounts.main}
+                  tasksAriaLabel={`Tasks for Main, ${taskCounts.main} tasks`}
+                  tasksTitle="Open task list for Main"
+                />
+              );
+            }
+            const p = entry.phase;
+            return (
+              <PhaseChatRow
+                href={buildProjectPageHref(projectSlug, { phaseId: p.id, allTasks: preservedAllTasks })}
+                isActive={activePhaseId === p.id}
+                isTasksPanelOpen={openTasksPhaseId === p.id}
+                key={p.id}
+                label={p.label}
+                onOpenTasks={() => openTasksForPhase(p.id)}
+                onPhaseNavigate={() => {
+                  void touchPhaseActivity(projectId, p.id);
+                }}
+                taskCount={taskCounts.byPhaseId[p.id] ?? 0}
+                tasksAriaLabel={`Tasks for ${p.label}, ${taskCounts.byPhaseId[p.id] ?? 0} tasks`}
+                tasksTitle={`Open task list for ${p.label}`}
+              />
+            );
+          })}
         </div>
       </div>
     </nav>

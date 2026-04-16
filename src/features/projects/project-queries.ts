@@ -25,7 +25,7 @@ export async function listProjectsWithPhasesForAccount(userId: string) {
       slug: true,
       openaiChatModel: true,
       phases: {
-        orderBy: { sortOrder: 'asc' },
+        orderBy: { lastUsedAt: 'desc' },
         select: { id: true, label: true },
       },
     },

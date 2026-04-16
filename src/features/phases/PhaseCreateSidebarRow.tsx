@@ -8,9 +8,10 @@ import {
   useState,
   type RefObject,
 } from 'react';
+import { useRouter } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
 import { toast } from 'sonner';
-import { createPhase } from '@/features/phases/phase-actions';
+import { createPhase, type CreatePhaseState } from '@/features/phases/phase-actions';
 
 const PHASE_CREATE_PLUS_BASE =
   'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-base leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/30';
@@ -138,12 +139,19 @@ function PhaseCreateEditingForm({
   );
 }
 
-export function PhaseCreateSidebarRow({ projectId }: { projectId: string }) {
-  const [state, action] = useActionState(createPhase.bind(null, projectId), undefined);
+export function PhaseCreateSidebarRow({
+  projectId,
+  projectSlug,
+}: {
+  projectId: string;
+  projectSlug: string;
+}) {
+  const router = useRouter();
+  const [state, action] = useActionState(createPhase.bind(null, projectId), undefined as CreatePhaseState | undefined);
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const prevStateRef = useRef<typeof state>(undefined);
+  const prevStateRef = useRef<CreatePhaseState | undefined>(undefined);
 
   useEffect(() => {
     if (state === prevStateRef.current) return;
@@ -157,8 +165,9 @@ export function PhaseCreateSidebarRow({ projectId }: { projectId: string }) {
       toast.success('Phase created.');
       setEditing(false);
       setValue('');
+      router.replace(`/app/projects/${projectSlug}?phase=${encodeURIComponent(state.phaseId)}`);
     }
-  }, [state]);
+  }, [state, projectSlug, router]);
 
   useEffect(() => {
     if (editing) {

@@ -8,6 +8,7 @@ import {
 } from '@/features/projects/cached-project-loaders';
 import { PROJECT_TASKS_CHAT_GRID_CLASS } from '@/features/projects/plan-tasks-layout';
 import { ProjectPlanTasksHost } from '@/features/projects/ProjectPlanTasksHost';
+import { buildPhaseRailOrder } from '@/features/phases/phase-rail-order';
 import { ProjectPlanMeta } from '@/features/projects/ProjectPlanMeta';
 import { getProjectForUser, listProjectsForUser } from '@/features/projects/project-queries';
 import { DEFAULT_PLAN, parsePlanFromJson, type PlanPayload } from '@/shared/domain/plan';
@@ -46,8 +47,10 @@ export default async function ProjectPage({
 
   const phases = await prisma.phase.findMany({
     where: { projectId: project.id },
-    orderBy: { sortOrder: 'asc' },
+    orderBy: { lastUsedAt: 'desc' },
   });
+
+  const phaseRail = buildPhaseRailOrder(project.mainLastUsedAt, phases);
 
   let activePhaseId: string | null = null;
   if (phaseParam) {
@@ -99,7 +102,7 @@ export default async function ProjectPage({
             />
             <PhaseSidebarNav
               activePhaseId={activePhaseId}
-              phases={phases}
+              phaseRail={phaseRail}
               projectId={project.id}
               projectSlug={project.slug}
               taskCounts={taskCounts}

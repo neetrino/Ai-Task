@@ -79,6 +79,8 @@ model Project {
   bitrixSyncCompleted Boolean @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  /// Last time the user was active in Main (no phase); drives sidebar order vs phases.
+  mainLastUsedAt   DateTime @default(now())
 
   owner        User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   phases       Phase[]
@@ -95,6 +97,8 @@ model Phase {
   label     String
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+  /// Last activity in this phase (messages, navigation, or creation); drives sidebar order.
+  lastUsedAt DateTime @default(now())
 
   project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   messages      Message[]
@@ -102,6 +106,7 @@ model Phase {
 
   @@index([projectId])
   @@index([projectId, sortOrder])
+  @@index([projectId, lastUsedAt])
 }
 
 enum MessageRole {
