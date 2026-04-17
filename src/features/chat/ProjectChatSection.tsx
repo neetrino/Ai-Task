@@ -533,7 +533,7 @@ function ProjectChatSectionImpl({
                   ))}
                 </div>
               ) : null}
-              <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              <div className="flex w-full min-w-0 flex-col gap-2">
                 <input
                   accept={ATTACHMENT_ACCEPT_ATTRIBUTE}
                   aria-hidden
@@ -544,34 +544,11 @@ function ProjectChatSectionImpl({
                   tabIndex={-1}
                   type="file"
                 />
-                <button
-                  aria-label="Attach files"
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:text-white"
-                  onClick={() => fileInputRef.current?.click()}
-                  title="Attach .md, .txt, .json, .yaml"
-                  type="button"
-                >
-                  <svg aria-hidden className="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24">
-                    <path
-                      d="M12 5v14m-7-7h14"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                </button>
-                <div className="-ml-5 shrink-0">
-                  <UpdatePlanToggle
-                    armed={planIntentArmed}
-                    onToggle={() => setPlanIntentArmed((v) => !v)}
-                  />
-                </div>
                 <label className="sr-only" htmlFor="project-chat-message">
                   Message
                 </label>
                 <textarea
-                  className={`scrollbar-chat-composer-hidden box-border min-w-0 resize-none bg-transparent px-1 pb-1 pt-2 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0 ${isComposerMultiline ? 'order-first w-full basis-full' : 'w-full flex-1'}`}
+                  className="scrollbar-chat-composer-hidden box-border min-w-0 w-full resize-none bg-transparent px-1 pb-1 pt-2 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0"
                   id="project-chat-message"
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => {
@@ -591,16 +568,49 @@ function ProjectChatSectionImpl({
                   }}
                   value={draft}
                 />
-                <div className="hidden shrink-0 sm:block">
-                  <ModelPresetPicker
-                    effective={modelOverride.effective}
-                    hasOverride={modelOverride.override !== null}
-                    onChange={modelOverride.setOverride}
-                    onReset={modelOverride.resetToProject}
-                  />
-                </div>
-                <div className="shrink-0">
-                  <SendOrStopControl onStop={handleStop} pending={isSending} />
+                <div
+                  className={`flex w-full min-w-0 items-center justify-between gap-2 ${
+                    isComposerMultiline ? 'pt-0.5' : ''
+                  }`}
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <button
+                      aria-label="Attach files"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:text-white"
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Attach .md, .txt, .json, .yaml"
+                      type="button"
+                    >
+                      <svg aria-hidden className="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24">
+                        <path
+                          d="M12 5v14m-7-7h14"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                        />
+                      </svg>
+                    </button>
+                    <div className="shrink-0">
+                      <UpdatePlanToggle
+                        armed={planIntentArmed}
+                        onToggle={() => setPlanIntentArmed((v) => !v)}
+                      />
+                    </div>
+                  </div>
+                  <div className="ml-auto flex min-w-0 items-center gap-2">
+                    <div className="hidden shrink-0 sm:block">
+                      <ModelPresetPicker
+                        effective={modelOverride.effective}
+                        hasOverride={modelOverride.override !== null}
+                        onChange={modelOverride.setOverride}
+                        onReset={modelOverride.resetToProject}
+                      />
+                    </div>
+                    <div className="shrink-0">
+                      <SendOrStopControl onStop={handleStop} pending={isSending} />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
