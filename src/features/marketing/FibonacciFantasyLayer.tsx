@@ -22,7 +22,7 @@ function FantasyRings() {
   return (
     <div aria-hidden className="fib-fantasy-rings pointer-events-none absolute inset-0 z-0">
       <div
-        className={`${ringBase} fib-fantasy-ring-a h-[min(46vw,420px)] w-[min(46vw,420px)] border-amber-400/30 shadow-[0_0_60px_-8px_rgb(251_191_36/0.25)]`}
+        className={`${ringBase} fib-fantasy-ring-a h-[min(46vw,420px)] w-[min(46vw,420px)] border-violet-400/30 shadow-[0_0_60px_-8px_rgb(124_58_237/0.28)]`}
       />
       <div
         className={`${ringBase} fib-fantasy-ring-b h-[min(64vw,580px)] w-[min(64vw,580px)] border-violet-400/22`}
@@ -46,7 +46,7 @@ function PhyllotaxisField() {
     >
       <defs>
         <radialGradient cx="50%" cy="50%" id="fib-phy-seed-glow" r="50%">
-          <stop offset="0%" stopColor="rgb(251 191 36)" stopOpacity="0.95" />
+          <stop offset="0%" stopColor="rgb(124 58 237)" stopOpacity="0.9" />
           <stop offset="45%" stopColor="rgb(167 139 250)" stopOpacity="0.55" />
           <stop offset="100%" stopColor="rgb(244 114 182)" stopOpacity="0" />
         </radialGradient>

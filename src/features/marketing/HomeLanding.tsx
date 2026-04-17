@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { AiShell } from '@/features/marketing/AiShell';
-import { GOLDEN_RATIO_PHI, LANDING_FIBONACCI_STRIP } from '@/features/marketing/landing-constants';
+import {
+  GOLDEN_RATIO_PHI,
+  LANDING_FIBONACCI_STRIP,
+  LANDING_FIB_STRIP_HIGHLIGHT,
+} from '@/features/marketing/landing-constants';
 import { AUTH_PRIMARY_CTA_HERO_CLASS } from '@/shared/ui/auth-cta-classes';
 import { ArrowRightGlyph, ListChecksGlyph, SparklesGlyph } from '@/shared/ui/brand-icons';
 import { SiteLogoImage } from '@/shared/ui/site-logo';
@@ -16,16 +20,16 @@ const PREVIEW_TASKS = [
 ] as const;
 
 const NAV_PRIMARY_CLASS =
-  'inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition hover:border-white hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400/80';
+  'inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition hover:border-white hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400/80';
 
 function TaskPreviewPanel() {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-amber-500/15 bg-gradient-to-br from-neutral-900/95 via-neutral-950/98 to-black shadow-[0_0_0_1px_rgb(255_255_255/0.05),0_32px_100px_-28px_rgb(251_191_36/0.12),0_0_80px_-20px_rgb(139_92_246/0.15)] ring-1 ring-white/[0.06] backdrop-blur-md">
-      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/10 blur-3xl" />
+    <div className="relative overflow-hidden rounded-2xl border border-violet-500/15 bg-gradient-to-br from-neutral-900/95 via-neutral-950/98 to-black shadow-[0_0_0_1px_rgb(255_255_255/0.05),0_32px_100px_-28px_rgb(124_58_237/0.12),0_0_80px_-20px_rgb(139_92_246/0.15)] ring-1 ring-white/[0.06] backdrop-blur-md">
+      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-violet-600/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-12 -left-10 h-40 w-40 rounded-full bg-violet-600/10 blur-3xl" />
       <div className="relative border-b border-white/[0.08] bg-black/40 px-5 py-4">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-neutral-300">
-          <SparklesGlyph className="h-4 w-4 text-amber-400/90" />
+          <SparklesGlyph className="h-4 w-4 text-violet-400/90" />
           AI task draft
         </div>
         <p className="mt-1 text-sm text-neutral-400">
@@ -74,13 +78,19 @@ function FibonacciSequenceStrip() {
         <span className="mr-1 shrink-0 text-neutral-500 sm:mr-2">Sequence</span>
         {LANDING_FIBONACCI_STRIP.map((n, index) => (
           <span className="flex shrink-0 items-center gap-0.5 sm:gap-1" key={`${String(n)}-${String(index)}`}>
-            {index > 0 ? <span className="text-amber-500/40">·</span> : null}
-            <span className="rounded border border-white/[0.09] bg-white/[0.04] px-1.5 py-0.5 tabular-nums text-neutral-300 sm:px-2">
+            {index > 0 ? <span className="text-violet-500/40">·</span> : null}
+            <span
+              className={`rounded border px-1.5 py-0.5 tabular-nums text-neutral-300 sm:px-2 ${
+                n === LANDING_FIB_STRIP_HIGHLIGHT
+                  ? 'border-violet-500/50 bg-violet-600/[0.12] shadow-[0_0_14px_-4px_rgb(124_58_237/0.35)]'
+                  : 'border-white/[0.09] bg-white/[0.04]'
+              }`}
+            >
               {n}
             </span>
           </span>
         ))}
-        <span className="shrink-0 pl-0.5 text-amber-400/50 sm:pl-1">∞</span>
+        <span className="shrink-0 pl-0.5 text-violet-400/50 sm:pl-1">∞</span>
       </div>
     </div>
   );
@@ -89,11 +99,11 @@ function FibonacciSequenceStrip() {
 function BentoGrid() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <div className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.04)] transition hover:border-amber-500/20 sm:col-span-2 lg:col-span-1">
-        <div className="pointer-events-none absolute right-4 top-4 font-mono text-5xl font-light leading-none text-white/[0.04] transition group-hover:text-amber-400/[0.07]">
+      <div className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.04)] transition hover:border-violet-500/20 sm:col-span-2 lg:col-span-1">
+        <div className="pointer-events-none absolute right-4 top-4 font-mono text-5xl font-light leading-none text-white/[0.04] transition group-hover:text-violet-400/[0.07]">
           φ
         </div>
-        <p className="text-xs font-medium uppercase tracking-wider text-amber-500/80">Golden continuity</p>
+        <p className="text-xs font-medium uppercase tracking-wider text-violet-400/85">Golden continuity</p>
         <p className="mt-3 text-lg font-medium tracking-tight text-neutral-100">
           Each answer uses what came before—like terms in a Fibonacci sum.
         </p>
@@ -150,15 +160,15 @@ function LandingHeader({ primaryHref, primaryLabel }: LandingCtaProps) {
 function LandingHeroCopy({ primaryHref, primaryLabel }: LandingCtaProps) {
   return (
     <div className="flex flex-col">
-      <div className="inline-flex max-w-max flex-wrap items-center gap-2 rounded-full border border-amber-500/20 bg-black/50 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-amber-200/90 shadow-[0_0_40px_-12px_rgb(251_191_36/0.25)] backdrop-blur-md">
+      <div className="inline-flex max-w-max flex-wrap items-center gap-2 rounded-full border border-violet-500/25 bg-black/50 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-violet-200/90 shadow-[0_0_40px_-12px_rgb(124_58_237/0.28)] backdrop-blur-md">
         <span className="text-neutral-400">Compounding</span>
-        <span className="h-1 w-1 rounded-full bg-amber-400/60" />
+        <span className="h-1 w-1 rounded-full bg-violet-400/60" />
         <span className="text-neutral-300">context-aware</span>
       </div>
 
       <h1 className="mt-8 max-w-xl text-4xl font-semibold tracking-tight text-neutral-50 sm:text-5xl sm:leading-[1.06]">
         Turn messy goals into a{' '}
-        <span className="bg-gradient-to-r from-amber-100 via-neutral-100 to-violet-200 bg-clip-text text-transparent">
+        <span className="bg-gradient-to-r from-violet-200 via-neutral-100 to-violet-300 bg-clip-text text-transparent">
           sequence you can ship
         </span>
         .
@@ -179,7 +189,7 @@ function LandingHeroCopy({ primaryHref, primaryLabel }: LandingCtaProps) {
           <ArrowRightGlyph className="h-5 w-5 text-slate-800" />
         </Link>
         <div className="landing-phi-pulse landing-phi-pulse-delay flex min-w-0 flex-1 items-start gap-2 font-mono text-[10px] leading-snug text-neutral-400 sm:gap-2 sm:text-xs">
-          <span className="mt-1 shrink-0 leading-none text-amber-500/60">●</span>
+          <span className="mt-1 shrink-0 leading-none text-violet-500/60">●</span>
           <span className="min-w-0">
             Models reason in passes—like adding the last two terms.
           </span>
@@ -193,7 +203,7 @@ function LandingHeroSection({ primaryHref, primaryLabel }: LandingCtaProps) {
   return (
     <section className="relative grid gap-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center lg:gap-16">
       <div className="landing-hero-grid pointer-events-none absolute inset-0 -z-10 opacity-[0.65] lg:opacity-100" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 hidden -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-amber-200/[0.09] via-white/[0.05] to-violet-300/[0.07] bg-clip-text font-serif text-[clamp(12rem,36vw,22rem)] font-light leading-none text-transparent lg:block">
+      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 hidden -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-violet-300/[0.1] via-white/[0.05] to-violet-400/[0.08] bg-clip-text font-serif text-[clamp(12rem,36vw,22rem)] font-light leading-none text-transparent lg:block">
         φ
       </div>
 
@@ -201,7 +211,7 @@ function LandingHeroSection({ primaryHref, primaryLabel }: LandingCtaProps) {
 
       <div className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
         <div className="pointer-events-none absolute -inset-4 rounded-[1.75rem] border border-dashed border-white/[0.07] opacity-70" />
-        <div className="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-br from-amber-500/10 via-transparent to-violet-600/10 blur-xl" />
+        <div className="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-br from-violet-600/12 via-transparent to-violet-600/10 blur-xl" />
         <TaskPreviewPanel />
       </div>
     </section>

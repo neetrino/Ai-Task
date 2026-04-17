@@ -1,5 +1,6 @@
 'use client';
 
+import { TrashOutlineGlyph } from '@/shared/ui/brand-icons';
 import {
   WORKSPACE_FIELD_CLASS,
   WORKSPACE_GHOST_BTN_CLASS,
@@ -12,7 +13,7 @@ const GRID_WRAP =
   'rounded-xl border px-3 py-3 shadow-none outline-none transition focus-visible:ring-2 focus-visible:ring-violet-500/40';
 
 const DELETE_TASK_BTN_CLASS =
-  'rounded-lg border border-red-500/30 bg-red-950/35 px-3 py-1.5 text-sm text-red-200/90 transition hover:border-red-500/45 hover:bg-red-950/55 disabled:opacity-60';
+  'inline-flex items-center justify-center rounded-lg border border-red-500/30 bg-red-950/35 p-1.5 text-red-200/90 transition hover:border-red-500/45 hover:bg-red-950/55 disabled:opacity-60';
 
 const SAVE_TASK_BTN_CLASS =
   'rounded-lg border border-emerald-500/35 bg-emerald-950/40 px-3 py-1.5 text-sm text-emerald-100/95 transition hover:border-emerald-400/50 hover:bg-emerald-900/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/35 disabled:opacity-60';
@@ -172,8 +173,18 @@ function PlanTaskRowEditForm({
             {savePending ? 'Saving…' : 'Save'}
           </button>
         </div>
-        <button className={DELETE_TASK_BTN_CLASS} disabled={savePending} onClick={onDeleteEdit} type="button">
-          Delete
+        <button
+          aria-label="Delete task"
+          className={DELETE_TASK_BTN_CLASS}
+          disabled={savePending}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteEdit();
+          }}
+          title="Delete task"
+          type="button"
+        >
+          <TrashOutlineGlyph className="h-4 w-4 shrink-0" />
         </button>
       </div>
     </div>

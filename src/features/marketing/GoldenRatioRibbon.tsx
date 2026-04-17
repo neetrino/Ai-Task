@@ -15,10 +15,10 @@ function GoldenRatioRibbonDefs() {
   return (
     <defs>
       <linearGradient id="golden-ribbon-line" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stopColor="rgb(251 191 36)" stopOpacity="0.9" />
-        <stop offset="61.803%" stopColor="rgb(251 191 36)" stopOpacity="0.35" />
+        <stop offset="0%" stopColor="rgb(139 92 246)" stopOpacity="0.88" />
+        <stop offset="61.803%" stopColor="rgb(139 92 246)" stopOpacity="0.32" />
         <stop offset="61.803%" stopColor="rgb(167 139 250)" stopOpacity="0.5" />
-        <stop offset="100%" stopColor="rgb(244 114 182)" stopOpacity="0.45" />
+        <stop offset="100%" stopColor="rgb(196 181 253)" stopOpacity="0.42" />
       </linearGradient>
       <filter id="golden-ribbon-glow" height="140%" width="140%" x="-20%" y="-20%">
         <feGaussianBlur result="blur" stdDeviation="1.6" />
@@ -31,7 +31,7 @@ function GoldenRatioRibbonLabels({ cutX }: { cutX: number }) {
   return (
     <>
       <text
-        fill="rgb(251 191 36 / 0.55)"
+        fill="rgb(167 139 250 / 0.6)"
         fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
         fontSize="9"
         letterSpacing="0.12em"
@@ -72,10 +72,10 @@ function GoldenRatioRibbonTracks({ cutX }: { cutX: number }) {
 
   return (
     <>
-      <rect height="56" opacity="0.22" rx="10" stroke="rgb(251 191 36 / 0.25)" width="520" x="0" y="0" />
+      <rect height="56" opacity="0.22" rx="10" stroke="rgb(139 92 246 / 0.28)" width="520" x="0" y="0" />
       <path d={h} filter="url(#golden-ribbon-glow)" stroke="url(#golden-ribbon-line)" strokeLinecap="round" strokeWidth="2" />
       <path d={h} stroke="url(#golden-ribbon-line)" strokeLinecap="round" strokeWidth="1.25" />
-      <path d={`M ${cutX} 28 V 46`} stroke="rgb(251 191 36 / 0.85)" strokeLinecap="round" strokeWidth="1.5" />
+      <path d={`M ${cutX} 28 V 46`} stroke="rgb(167 139 250 / 0.88)" strokeLinecap="round" strokeWidth="1.5" />
     </>
   );
 }

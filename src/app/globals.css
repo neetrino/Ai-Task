@@ -103,10 +103,10 @@ body {
       radial-gradient(ellipse 60% 45% at 0% 85%, rgb(167 139 250 / 0.06), transparent 45%);
   }
 
-  /** Marketing landing: black-first mesh — visible φ-tones (amber / violet / rose). */
+  /** Marketing landing: black-first mesh — visible φ-tones (violet / violet / rose). */
   .fib-backdrop-mesh-ink {
     background:
-      radial-gradient(ellipse 95% 58% at 50% -8%, rgb(251 191 36 / 0.11), transparent 54%),
+      radial-gradient(ellipse 95% 58% at 50% -8%, rgb(124 58 237 / 0.11), transparent 54%),
       radial-gradient(ellipse 72% 50% at 100% 82%, rgb(139 92 246 / 0.09), transparent 50%),
       radial-gradient(ellipse 58% 42% at 0% 68%, rgb(244 114 182 / 0.065), transparent 48%),
       radial-gradient(ellipse 120% 80% at 50% 120%, rgb(0 0 0 / 0.55), transparent 55%);
@@ -139,7 +139,7 @@ body {
     transform-origin: center;
   }
 
-  /** Dual animation: slow rotation + breathing glow (golden / violet). */
+  /** Dual animation: slow rotation + breathing glow (violet tones). */
   .fib-spiral-slow.fib-spiral-hue {
     animation:
       fib-spiral-rotate 140s linear infinite,
@@ -158,7 +158,7 @@ body {
   /** φ-spiral “northern lights” — slow mesh drift; screen blend keeps spirals visible underneath. */
   .fib-fantasy-aurora {
     background:
-      radial-gradient(ellipse 85% 55% at 25% 18%, rgb(251 191 36 / 0.22), transparent 58%),
+      radial-gradient(ellipse 85% 55% at 25% 18%, rgb(124 58 237 / 0.2), transparent 58%),
       radial-gradient(ellipse 70% 50% at 78% 82%, rgb(167 139 250 / 0.18), transparent 52%),
       radial-gradient(ellipse 55% 48% at 48% 48%, rgb(244 114 182 / 0.12), transparent 50%),
       radial-gradient(ellipse 100% 90% at 50% 100%, rgb(0 0 0 / 0.4), transparent 58%);
@@ -219,11 +219,11 @@ body {
     background-size: 55px 55px;
   }
 
-  /** Marketing: slightly brighter grid + amber hairlines (Fibonacci spacing still 55px). */
+  /** Marketing: slightly brighter grid + violet hairlines (Fibonacci spacing still 55px). */
   .fib-grid-fade-landing {
     opacity: 0.48;
     background-image:
-      linear-gradient(rgb(251 191 36 / 0.06) 1px, transparent 1px),
+      linear-gradient(rgb(139 92 246 / 0.07) 1px, transparent 1px),
       linear-gradient(90deg, rgb(255 255 255 / 0.045) 1px, transparent 1px);
     background-size: 55px 55px;
   }
@@ -299,7 +299,7 @@ body {
 @keyframes fib-spiral-dream {
   0%,
   100% {
-    filter: brightness(0.92) drop-shadow(0 0 12px rgb(251 191 36 / 0.15));
+    filter: brightness(0.92) drop-shadow(0 0 12px rgb(124 58 237 / 0.18));
   }
   50% {
     filter: brightness(1.14) drop-shadow(0 0 32px rgb(167 139 250 / 0.32));
@@ -351,11 +351,11 @@ body {
   0%,
   100% {
     opacity: 0.35;
-    filter: drop-shadow(0 0 0 rgb(251 191 36 / 0));
+    filter: drop-shadow(0 0 0 rgb(124 58 237 / 0));
   }
   50% {
     opacity: 0.55;
-    filter: drop-shadow(0 0 28px rgb(251 191 36 / 0.12));
+    filter: drop-shadow(0 0 28px rgb(124 58 237 / 0.14));
   }
 }
 

@@ -47,6 +47,40 @@ export async function createProject(
   return { success: true };
 }
 
+export type RenameProjectState = { error: string } | { success: true };
+
+/**
+ * Updates the project display name. Slug is unchanged so existing links keep working.
+ */
+export async function renameProject(projectId: string, name: string): Promise<RenameProjectState> {
+  const userId = await requireActiveUserId();
+  const parsed = createSchema.safeParse({ name });
+  if (!parsed.success) {
+    logger.warn({ issues: parsed.error.flatten() }, 'renameProject validation failed');
+    return { error: 'Enter a valid project name.' };
+  }
+  const trimmed = parsed.data.name.trim();
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, ownerId: userId },
+    select: { id: true, name: true, slug: true },
+  });
+  if (!project) {
+    logger.warn({ projectId }, 'renameProject: project not found');
+    return { error: 'Project not found.' };
+  }
+  if (trimmed === project.name) {
+    return { success: true };
+  }
+  await prisma.project.update({
+    where: { id: projectId },
+    data: { name: trimmed },
+  });
+  revalidatePath('/app');
+  revalidatePath(`/app/projects/${project.slug}`);
+  revalidateProjectData(projectId);
+  return { success: true };
+}
+
 export async function updateProjectBitrix(projectId: string, formData: FormData): Promise<void> {
   const userId = await requireActiveUserId();
   const project = await prisma.project.findFirst({

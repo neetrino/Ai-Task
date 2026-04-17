@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { PencilOutlineGlyph, TrashOutlineGlyph } from '@/shared/ui/brand-icons';
 
 const MENU_PANEL_CLASS =
   'absolute right-0 top-full z-[60] mt-1 min-w-[9.5rem] overflow-hidden rounded-md border border-white/[0.09] bg-workspace-elevated py-0.5 shadow-lg shadow-black/40';
@@ -22,20 +23,6 @@ function DotsHorizontalIcon({ className }: { className?: string }) {
   );
 }
 
-function PencilOutlineIcon({ className }: { className?: string }) {
-  return (
-    <svg aria-hidden className={className} fill="none" viewBox="0 0 24 24">
-      <path
-        className="stroke-current"
-        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-      />
-    </svg>
-  );
-}
-
 function StarOutlineIcon({ className }: { className?: string }) {
   return (
     <svg aria-hidden className={className} fill="none" viewBox="0 0 24 24">
@@ -50,29 +37,18 @@ function StarOutlineIcon({ className }: { className?: string }) {
   );
 }
 
-function TrashOutlineIcon({ className }: { className?: string }) {
-  return (
-    <svg aria-hidden className={className} fill="none" viewBox="0 0 24 24">
-      <path
-        className="stroke-current"
-        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-      />
-    </svg>
-  );
-}
-
 /**
  * Overflow menu for a phase row; Rename wires to inline edit. Other items are UI-only for now.
  */
 export function PhaseRowMoreMenu({
   onRename,
   isRowEditing,
+  isActiveRow = false,
 }: {
   onRename: () => void;
   isRowEditing: boolean;
+  /** Solid violet phase row — lighten trigger for contrast. */
+  isActiveRow?: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -102,6 +78,10 @@ export function PhaseRowMoreMenu({
       ? 'opacity-100'
       : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100';
 
+  const triggerToneClass = isActiveRow
+    ? 'text-white/75 hover:bg-white/15 hover:text-white focus-visible:ring-white/40'
+    : 'text-neutral-400 hover:bg-white/[0.08] hover:text-neutral-200 focus-visible:ring-violet-500/35';
+
   return (
     <div className="relative shrink-0" ref={wrapRef}>
       <button
@@ -109,7 +89,7 @@ export function PhaseRowMoreMenu({
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         aria-label="Phase options"
-        className={`rounded-md p-1 text-neutral-400 transition hover:bg-white/[0.08] hover:text-neutral-200 focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-violet-500/35 ${dotsVisible}`}
+        className={`rounded-md p-1 transition focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 ${triggerToneClass} ${dotsVisible}`}
         onClick={() => setMenuOpen((v) => !v)}
         type="button"
       >
@@ -127,7 +107,7 @@ export function PhaseRowMoreMenu({
               role="menuitem"
               type="button"
             >
-              <PencilOutlineIcon className={`${MENU_ICON_CLASS} text-neutral-500`} />
+              <PencilOutlineGlyph className={`${MENU_ICON_CLASS} text-neutral-500`} />
               Rename
             </button>
           </li>
@@ -149,7 +129,7 @@ export function PhaseRowMoreMenu({
               role="menuitem"
               type="button"
             >
-              <TrashOutlineIcon className={MENU_ICON_CLASS} />
+              <TrashOutlineGlyph className={MENU_ICON_CLASS} />
               Delete
             </button>
           </li>
