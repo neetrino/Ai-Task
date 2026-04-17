@@ -139,8 +139,76 @@ body {
     transform-origin: center;
   }
 
+  /** Dual animation: slow rotation + breathing glow (golden / violet). */
+  .fib-spiral-slow.fib-spiral-hue {
+    animation:
+      fib-spiral-rotate 140s linear infinite,
+      fib-spiral-dream 21s ease-in-out infinite;
+  }
+
   .fib-spiral-delay-negative {
     animation-delay: -40s;
+  }
+
+  /** When two animations run, only the spiral rotation keeps the negative delay. */
+  .fib-spiral-slow.fib-spiral-hue.fib-spiral-delay-negative {
+    animation-delay: -40s, 0s;
+  }
+
+  /** φ-spiral “northern lights” — slow mesh drift; screen blend keeps spirals visible underneath. */
+  .fib-fantasy-aurora {
+    background:
+      radial-gradient(ellipse 85% 55% at 25% 18%, rgb(251 191 36 / 0.22), transparent 58%),
+      radial-gradient(ellipse 70% 50% at 78% 82%, rgb(167 139 250 / 0.18), transparent 52%),
+      radial-gradient(ellipse 55% 48% at 48% 48%, rgb(244 114 182 / 0.12), transparent 50%),
+      radial-gradient(ellipse 100% 90% at 50% 100%, rgb(0 0 0 / 0.4), transparent 58%);
+    background-size: 140% 140%;
+    mix-blend-mode: screen;
+    opacity: 0.78;
+    animation: fib-aurora-breathe 24s ease-in-out infinite;
+  }
+
+  .fib-fantasy-ring {
+    animation: fib-ring-orbit 34s ease-in-out infinite;
+  }
+
+  .fib-fantasy-ring-a {
+    animation-duration: 21s;
+  }
+
+  .fib-fantasy-ring-b {
+    animation-duration: 34s;
+    animation-direction: reverse;
+  }
+
+  .fib-fantasy-ring-c {
+    animation-duration: 55s;
+  }
+
+  .fib-phy-seed {
+    animation: fib-phy-twinkle 3.4s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .fib-phy circle:nth-child(3n) {
+    animation-delay: 0s;
+  }
+
+  .fib-phy circle:nth-child(3n + 1) {
+    animation-delay: 0.21s;
+  }
+
+  .fib-phy circle:nth-child(3n + 2) {
+    animation-delay: 0.55s;
+  }
+
+  .fib-phy circle:nth-child(odd) {
+    animation-duration: 2.75s;
+  }
+
+  .fib-phy circle:nth-child(even) {
+    animation-duration: 4.2s;
   }
 
   .fib-grid-fade {
@@ -228,6 +296,57 @@ body {
   }
 }
 
+@keyframes fib-spiral-dream {
+  0%,
+  100% {
+    filter: brightness(0.92) drop-shadow(0 0 12px rgb(251 191 36 / 0.15));
+  }
+  50% {
+    filter: brightness(1.14) drop-shadow(0 0 32px rgb(167 139 250 / 0.32));
+  }
+}
+
+@keyframes fib-aurora-breathe {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(4%, -3%) scale(1.05);
+  }
+  66% {
+    transform: translate(-3%, 4%) scale(0.98);
+  }
+}
+
+@keyframes fib-ring-orbit {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    opacity: 0.14;
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(180deg) scale(1.03);
+    opacity: 0.32;
+  }
+}
+
+@keyframes fib-phy-twinkle {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: scale(0.72);
+  }
+  45% {
+    opacity: 0.98;
+    transform: scale(1.08);
+  }
+  70% {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+}
+
 @keyframes landing-phi-glow {
   0%,
   100% {
@@ -244,6 +363,28 @@ body {
   .fib-orb-drift,
   .fib-spiral-slow {
     animation: none;
+  }
+
+  .fib-fantasy-aurora,
+  .fib-fantasy-ring,
+  .fib-phy-seed {
+    animation: none !important;
+  }
+
+  .fib-fantasy-aurora {
+    mix-blend-mode: normal;
+    opacity: 0.45;
+    transform: none;
+  }
+
+  .fib-fantasy-ring {
+    opacity: 0.18;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  }
+
+  .fib-phy-seed {
+    opacity: 0.55;
+    transform: scale(1);
   }
 
   .landing-phi-pulse {

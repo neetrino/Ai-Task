@@ -1,3 +1,4 @@
+import { FibonacciFantasyLayer } from '@/features/marketing/FibonacciFantasyLayer';
 import { GoldenRatioRibbon } from '@/features/marketing/GoldenRatioRibbon';
 import { buildGoldenSpiralPath } from '@/features/marketing/fibonacci-spiral-path';
 
@@ -22,7 +23,7 @@ export function FibonacciMarketingBackdrop() {
       <div className="fib-grid-fade-landing absolute inset-0" />
       <GoldenRatioRibbon className="absolute bottom-[12%] left-[4%] w-[min(92vw,520px)] opacity-[0.55] sm:bottom-[14%] sm:left-[6%]" />
       <svg
-        className="fib-spiral-slow absolute -right-[18%] bottom-0 h-[min(72vh,560px)] w-[min(72vw,560px)] text-amber-400/32"
+        className="fib-spiral-slow fib-spiral-hue absolute -right-[18%] bottom-0 h-[min(72vh,560px)] w-[min(72vw,560px)] text-amber-400/32"
         preserveAspectRatio="xMidYMid meet"
         viewBox="0 0 100 100"
       >
@@ -43,7 +44,7 @@ export function FibonacciMarketingBackdrop() {
         />
       </svg>
       <svg
-        className="fib-spiral-slow fib-spiral-delay-negative absolute -left-[12%] -top-[8%] h-[min(48vh,380px)] w-[min(48vw,380px)] -scale-x-100 text-violet-400/28"
+        className="fib-spiral-slow fib-spiral-delay-negative fib-spiral-hue absolute -left-[12%] -top-[8%] h-[min(48vh,380px)] w-[min(48vw,380px)] -scale-x-100 text-violet-400/28"
         preserveAspectRatio="xMidYMid meet"
         viewBox="0 0 100 100"
       >
@@ -56,6 +57,7 @@ export function FibonacciMarketingBackdrop() {
           vectorEffect="non-scaling-stroke"
         />
       </svg>
+      <FibonacciFantasyLayer />
     </div>
   );
 }
