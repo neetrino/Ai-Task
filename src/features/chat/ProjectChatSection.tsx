@@ -228,7 +228,7 @@ function ProjectChatSectionImpl({
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-5 pt-6">
         <div className={`pointer-events-auto w-full ${CHAT_CONTENT_MAX}`}>
-          <div className="flex w-full min-w-0 flex-wrap items-end gap-x-2 gap-y-1 rounded-[1.75rem] border border-white/[0.1] bg-workspace-elevated px-2 py-1.5 shadow-none">
+          <div className="flex w-full min-w-0 flex-wrap items-end gap-x-2 gap-y-1 rounded-[1.75rem] bg-workspace-elevated px-2 py-1.5 shadow-[0_2px_6px_rgba(0,0,0,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]">
             <button
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg leading-none text-neutral-500 transition hover:bg-white/[0.06] hover:text-neutral-300 ${isComposerMultiline ? 'mr-auto' : ''}`}
               disabled
