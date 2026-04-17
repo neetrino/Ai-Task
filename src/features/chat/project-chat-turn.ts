@@ -2,8 +2,13 @@ import { revalidatePath } from 'next/cache';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { APIUserAbortError } from 'openai/error';
 import { composeUserMessageWithAttachments } from '@/features/attachments/attachment-context';
-import { CHAT_MODEL_HISTORY_LIMIT } from '@/features/chat/chat-limits';
-import { PLAN_SYSTEM_PROMPT } from '@/features/chat/prompts';
+import {
+  buildProfile,
+  type ContextProfileId,
+  getHistoryLimitForProfile,
+  type ProfileBuildResult,
+} from '@/features/chat/profiles';
+import { loadBudgetSnapshot, recordUsage } from '@/features/billing/token-budget';
 import { normalizePlanFromAi, type PlanPayload } from '@/shared/domain/plan';
 import { getOpenAI } from '@/shared/lib/openai';
 import { getEffectiveChatModel } from '@/shared/lib/openai-model';
@@ -22,6 +27,11 @@ type ProjectForChatModel = Parameters<typeof getEffectiveChatModel>[0] & {
   slug: string;
 };
 
+/** Concrete model id chosen by the router for this turn. */
+export type ChatTurnModelOverride = {
+  readonly modelId: string;
+};
+
 export type RunProjectChatTurnParams = {
   userId: string;
   projectId: string;
@@ -36,6 +46,17 @@ export type RunProjectChatTurnParams = {
   project?: ProjectForChatModel;
   /** Attachment ids previously uploaded for this turn; embedded into the user message. */
   attachmentIds?: string[];
+  /**
+   * Which context profile to use. Defaults to `plan` for backward
+   * compatibility while the smart router is being wired up. The router (Étape
+   * 4) will pick this from request signals.
+   */
+  contextProfile?: ContextProfileId;
+  /**
+   * Concrete model id selected by the router. When omitted, the legacy
+   * `getEffectiveChatModel` path is used (project's stored model or default).
+   */
+  modelOverride?: ChatTurnModelOverride;
 };
 
 type PlanSnapshotRow = { version: number; payload: unknown } | null;
@@ -66,41 +87,27 @@ function buildAssistantTextFromJsonBody(body: Record<string, unknown>): string {
   return `${text}\n\n**Open questions**\n${questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`;
 }
 
-function buildChatCompletionMessages(
-  history: { role: string; content: string }[],
-  priorPlan: PlanPayload | undefined,
-): ChatCompletionMessageParam[] {
-  const systemContent = priorPlan
-    ? `${PLAN_SYSTEM_PROMPT}\n\nCurrent plan JSON:\n${JSON.stringify(priorPlan)}`
-    : PLAN_SYSTEM_PROMPT;
-
-  return [
-    { role: 'system', content: systemContent },
-    ...history.map((m) => ({
-      role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
-      content: m.content,
-    })),
-  ];
-}
-
 async function loadOpenAiMessagesAndModel(
   project: ProjectForChatModel,
   projectId: string,
   phaseId: string | null,
+  contextProfile: ContextProfileId,
+  modelOverride: ChatTurnModelOverride | undefined,
 ): Promise<{
-  messages: ChatCompletionMessageParam[];
+  built: ProfileBuildResult;
   model: string;
   latestSnapshot: PlanSnapshotRow;
   priorPlan: PlanPayload | undefined;
 }> {
+  const historyLimit = getHistoryLimitForProfile(contextProfile);
   // Parallel: history and latest snapshot are independent reads. Newest
-  // `CHAT_MODEL_HISTORY_LIMIT` rows are fetched desc and reversed so the LLM
-  // sees ascending chronological order without dropping recent messages.
+  // `historyLimit` rows are fetched desc and reversed so the LLM sees
+  // ascending chronological order without dropping recent messages.
   const [historyDesc, latestSnapshot] = await Promise.all([
     prisma.message.findMany({
       where: { projectId, phaseId },
       orderBy: { createdAt: 'desc' },
-      take: CHAT_MODEL_HISTORY_LIMIT,
+      take: historyLimit,
       select: { role: true, content: true },
     }),
     prisma.planSnapshot.findFirst({
@@ -112,32 +119,38 @@ async function loadOpenAiMessagesAndModel(
 
   const history = historyDesc.reverse();
   const priorPlan = latestSnapshot?.payload as PlanPayload | undefined;
-  const messages = buildChatCompletionMessages(history, priorPlan);
-  const model = getEffectiveChatModel(project);
-  return { messages, model, latestSnapshot, priorPlan };
+  const built = buildProfile(contextProfile, { history, priorPlan });
+  const model = modelOverride?.modelId ?? getEffectiveChatModel(project);
+  return { built, model, latestSnapshot, priorPlan };
 }
 
-type OpenAiJsonOutcome =
-  | { kind: 'success'; rawJson: unknown }
+type OpenAiCallOutcome =
+  | {
+      kind: 'success';
+      rawText: string;
+      promptTokens: number;
+      completionTokens: number;
+    }
   | { kind: 'cancelled' }
   | { kind: 'error'; message: string };
 
-async function requestPlanJsonFromOpenAi(
+async function requestAssistantReplyFromOpenAi(
   model: string,
-  messages: ChatCompletionMessageParam[],
+  built: ProfileBuildResult,
   signal: AbortSignal | undefined,
   projectId: string,
-): Promise<OpenAiJsonOutcome> {
+): Promise<OpenAiCallOutcome> {
   // Note: preflight already revalidated project data after saving the user
   // message, so OpenAI failure/cancel branches do not need to invalidate the
   // cache again. Blowing cache tags on transient AI errors made every retry
   // pay the full RSC refetch cost on the next navigation.
   try {
+    const messages: ChatCompletionMessageParam[] = built.messages;
     const completion = await getOpenAI().chat.completions.create(
       {
         model,
-        response_format: { type: 'json_object' },
         messages,
+        ...(built.responseFormat ? { response_format: built.responseFormat } : {}),
       },
       { signal },
     );
@@ -145,7 +158,12 @@ async function requestPlanJsonFromOpenAi(
     if (!content) {
       return { kind: 'error', message: 'Empty AI response' };
     }
-    return { kind: 'success', rawJson: JSON.parse(content) as unknown };
+    return {
+      kind: 'success',
+      rawText: content,
+      promptTokens: completion.usage?.prompt_tokens ?? 0,
+      completionTokens: completion.usage?.completion_tokens ?? 0,
+    };
   } catch (e) {
     if (isCancellationError(e)) {
       return { kind: 'cancelled' };
@@ -249,12 +267,18 @@ async function runChatPreflight(
   return { project, revalidateProject };
 }
 
+type PersistMeta = {
+  readonly modelId: string;
+  readonly tokensUsed: number;
+};
+
 async function persistAssistantPlanFromJson(
   rawJson: unknown,
   projectId: string,
   phaseId: string | null,
   latestSnapshot: PlanSnapshotRow,
   priorPlan: PlanPayload | undefined,
+  meta: PersistMeta,
   revalidateProject: () => void,
 ): Promise<{ error: string } | undefined> {
   if (!rawJson || typeof rawJson !== 'object') {
@@ -279,6 +303,9 @@ async function persistAssistantPlanFromJson(
       phaseId,
       role: 'assistant',
       content: assistant_message,
+      modelId: meta.modelId,
+      contextProfile: 'plan',
+      tokensUsed: meta.tokensUsed,
     },
   });
 
@@ -294,6 +321,28 @@ async function persistAssistantPlanFromJson(
   revalidateProject();
 }
 
+async function persistAssistantTextReply(
+  rawText: string,
+  projectId: string,
+  phaseId: string | null,
+  contextProfile: ContextProfileId,
+  meta: PersistMeta,
+  revalidateProject: () => void,
+): Promise<void> {
+  await prisma.message.create({
+    data: {
+      projectId,
+      phaseId,
+      role: 'assistant',
+      content: rawText.trim(),
+      modelId: meta.modelId,
+      contextProfile,
+      tokensUsed: meta.tokensUsed,
+    },
+  });
+  revalidateProject();
+}
+
 /**
  * Persists the user message, calls OpenAI to update the plan, persists assistant reply.
  * Pass `signal` (e.g. `req.signal`) to cancel the OpenAI request when the client aborts.
@@ -301,7 +350,24 @@ async function persistAssistantPlanFromJson(
 export async function runProjectChatTurn(
   params: RunProjectChatTurnParams,
 ): Promise<RunProjectChatTurnResult> {
-  const { projectId, phaseId, signal } = params;
+  const {
+    userId,
+    projectId,
+    phaseId,
+    signal,
+    contextProfile = 'plan',
+    modelOverride,
+  } = params;
+
+  // Budget guard runs *before* preflight persists the user message — over-cap
+  // users get a clean rejection without polluting the chat history.
+  const budget = await loadBudgetSnapshot({ userId, projectId });
+  if (budget.blocked) {
+    return {
+      error:
+        'Monthly token budget reached. Increase the limit or wait for the next period.',
+    };
+  }
 
   const preflight = await runChatPreflight(params);
   if ('error' in preflight) {
@@ -310,13 +376,15 @@ export async function runProjectChatTurn(
 
   const { project, revalidateProject } = preflight;
 
-  const { messages, model, latestSnapshot, priorPlan } = await loadOpenAiMessagesAndModel(
+  const { built, model, latestSnapshot, priorPlan } = await loadOpenAiMessagesAndModel(
     project,
     projectId,
     phaseId,
+    contextProfile,
+    modelOverride,
   );
 
-  const openAiOutcome = await requestPlanJsonFromOpenAi(model, messages, signal, projectId);
+  const openAiOutcome = await requestAssistantReplyFromOpenAi(model, built, signal, projectId);
 
   if (openAiOutcome.kind === 'cancelled') {
     return { cancelled: true };
@@ -325,15 +393,46 @@ export async function runProjectChatTurn(
     return { error: openAiOutcome.message };
   }
 
-  const persistError = await persistAssistantPlanFromJson(
-    openAiOutcome.rawJson,
-    projectId,
-    phaseId,
-    latestSnapshot,
-    priorPlan,
-    revalidateProject,
-  );
-  if (persistError) {
-    return persistError;
+  const tokensUsed = openAiOutcome.promptTokens + openAiOutcome.completionTokens;
+  const meta: PersistMeta = { modelId: model, tokensUsed };
+
+  if (built.persistsPlan) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(openAiOutcome.rawText);
+    } catch (e) {
+      logger.warn({ err: e }, 'AI chat JSON parse failed');
+      return { error: 'AI returned an invalid plan. Try rephrasing your message.' };
+    }
+    const persistError = await persistAssistantPlanFromJson(
+      parsed,
+      projectId,
+      phaseId,
+      latestSnapshot,
+      priorPlan,
+      meta,
+      revalidateProject,
+    );
+    if (persistError) {
+      return persistError;
+    }
+  } else {
+    await persistAssistantTextReply(
+      openAiOutcome.rawText,
+      projectId,
+      phaseId,
+      built.profile,
+      meta,
+      revalidateProject,
+    );
   }
+
+  await recordUsage({
+    userId,
+    projectId,
+    modelId: model,
+    contextProfile: built.profile,
+    promptTokens: openAiOutcome.promptTokens,
+    completionTokens: openAiOutcome.completionTokens,
+  });
 }

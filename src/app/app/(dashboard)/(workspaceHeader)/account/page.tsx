@@ -4,6 +4,7 @@ import { parseAccountTab } from '@/features/account/account-tab';
 import { AccountProfilePanel } from '@/features/account/AccountProfilePanel';
 import { AccountSettingsBlocks } from '@/features/account/AccountSettingsBlocks';
 import { AccountSidebar } from '@/features/account/AccountSidebar';
+import { loadBudgetSnapshot } from '@/features/billing/token-budget';
 import { listProjectsWithPhasesForAccount } from '@/features/projects/project-queries';
 import { DEFAULT_PLAN, parsePlanFromJson, type PlanPayload } from '@/shared/domain/plan';
 import { prisma } from '@/shared/lib/prisma';
@@ -91,10 +92,13 @@ export default async function AccountPage({
   const activePhaseId =
     activeProject.phases.length > 0 ? activeProject.phases[0].id : null;
 
-  const snapshot = await prisma.planSnapshot.findFirst({
-    where: { projectId: activeProject.id, phaseId: activePhaseId },
-    orderBy: { updatedAt: 'desc' },
-  });
+  const [snapshot, budget] = await Promise.all([
+    prisma.planSnapshot.findFirst({
+      where: { projectId: activeProject.id, phaseId: activePhaseId },
+      orderBy: { updatedAt: 'desc' },
+    }),
+    loadBudgetSnapshot({ userId, projectId: activeProject.id }),
+  ]);
   const plan = resolvePlanPayload(snapshot?.payload ?? null);
 
   const settingsKey = `${activeProject.id}-${activePhaseId ?? 'none'}`;
@@ -144,10 +148,12 @@ export default async function AccountPage({
                 <AccountSettingsBlocks
                   key={settingsKey}
                   activePhaseId={activePhaseId}
+                  budget={budget}
                   plan={plan}
                   project={{
                     id: activeProject.id,
-                    openaiChatModel: activeProject.openaiChatModel,
+                    modelPreset: activeProject.modelPreset,
+                    pinnedModelId: activeProject.pinnedModelId,
                   }}
                 />
               </section>

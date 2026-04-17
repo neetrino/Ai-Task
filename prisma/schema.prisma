@@ -22,10 +22,17 @@ model User {
   image         String?
   /// New signups are PENDING until an operator sets ACTIVE in the database.
   accessStatus  AccessStatus        @default(PENDING)
+  /// Total prompt+completion tokens consumed in the current period.
+  tokensUsedMonth Int             @default(0)
+  /// Per-user monthly cap (null = unlimited; soft warn at 80%, hard block at 100%).
+  tokensCapMonth  Int?
+  /// Start of the current usage period; lazy reset adds 30 days when crossed.
+  tokensResetAt   DateTime          @default(now())
   accounts      Account[]
   sessions      Session[]
   projects      Project[]
   attachments   ProjectAttachment[]
+  tokenUsageEvents TokenUsageEvent[]
 }
 
 model Account {
@@ -71,8 +78,18 @@ model Project {
   name                String
   slug                String   @unique
   ownerId             String
-  /// When null or unknown, app uses default gpt-4o-mini (see OPENAI_CHAT_MODEL_OPTIONS in code).
+  /// Preset describing how the router picks a model (AUTO / ECONOMY / BALANCED / QUALITY / PINNED).
+  modelPreset         ModelPreset @default(AUTO)
+  /// Concrete model id used when modelPreset = PINNED.
+  pinnedModelId       String?
+  /// @deprecated kept for backward compat; data migrated into modelPreset/pinnedModelId.
   openaiChatModel     String?
+  /// Optional per-project monthly cap (null = no project-specific limit).
+  tokensCapMonth      Int?
+  /// Total tokens consumed by this project in the current period.
+  tokensUsedMonth     Int      @default(0)
+  /// Start of the current per-project usage period.
+  tokensResetAt       DateTime @default(now())
   bitrixProjectId     String?
   taskOwnerId         String?
   taskAssigneeId      String?
@@ -88,6 +105,7 @@ model Project {
   messages      Message[]
   planSnapshots PlanSnapshot[]
   attachments   ProjectAttachment[]
+  tokenUsageEvents TokenUsageEvent[]
 
   @@index([ownerId])
   @@index([ownerId, updatedAt])
@@ -123,6 +141,12 @@ model Message {
   phaseId   String?
   role      MessageRole
   content   String      @db.Text
+  /// Concrete model that produced this assistant message (null for user rows / legacy data).
+  modelId        String?
+  /// Context profile used when generating this assistant message: 'lite' | 'doc' | 'plan'.
+  contextProfile String?
+  /// Total prompt+completion tokens spent on this turn (assistant rows only).
+  tokensUsed     Int?
   createdAt DateTime    @default(now())
 
   project     Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -181,4 +205,32 @@ model ProjectAttachment {
   @@index([projectId, createdAt])
   @@index([messageId])
   @@index([projectId, format])
+}
+
+enum ModelPreset {
+  AUTO
+  ECONOMY
+  BALANCED
+  QUALITY
+  PINNED
+}
+
+/// Append-only log of OpenAI usage. Powers per-user/per-project counters
+/// (denormalized on User/Project) and future analytics.
+model TokenUsageEvent {
+  id               String   @id @default(cuid())
+  userId           String
+  projectId        String
+  modelId          String
+  /// 'lite' | 'doc' | 'plan' — which context profile produced the call.
+  contextProfile   String
+  promptTokens     Int
+  completionTokens Int
+  createdAt        DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([projectId, createdAt])
 }

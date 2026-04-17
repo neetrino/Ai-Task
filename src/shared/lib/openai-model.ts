@@ -1,59 +1,34 @@
 /**
- * Single source of truth for AI chat model: UI labels, validation, and default.
- * Do not duplicate model lists elsewhere.
+ * @deprecated Use `@/shared/lib/ai-models` (catalog + presets) and
+ * `@/features/ai-router` for model selection. This module is kept as a thin
+ * shim for legacy callers (project queries, account/settings UI) until the
+ * preset migration is fully rolled out.
  */
 
-export const DEFAULT_CHAT_MODEL_ID = 'gpt-4o-mini';
+import {
+  CHAT_MODELS,
+  getDefaultModelForTier,
+  isKnownModelId as catalogIsKnown,
+} from './ai-models/catalog';
+
+export const DEFAULT_CHAT_MODEL_ID: string = getDefaultModelForTier('nano').id;
 
 export type OpenAiChatModelOption = {
   readonly id: string;
   readonly label: string;
-  /** English hint: cost / capability (approximate; check OpenAI pricing). */
   readonly description: string;
 };
 
-/** Curated list for the UI; only these ids can be saved on the project. */
-export const OPENAI_CHAT_MODEL_OPTIONS: readonly OpenAiChatModelOption[] = [
-  {
-    id: 'gpt-4o-mini',
-    label: 'GPT-4o mini',
-    description: 'Default — fastest and most economical',
-  },
-  {
-    id: 'gpt-4.1-mini',
-    label: 'GPT-4.1 mini',
-    description: 'Solid quality — still budget-friendly',
-  },
-  {
-    id: 'gpt-4o',
-    label: 'GPT-4o',
-    description: 'Strong general model — higher cost',
-  },
-  {
-    id: 'gpt-4.1',
-    label: 'GPT-4.1',
-    description: 'Very capable — expensive',
-  },
-  {
-    id: 'o4-mini',
-    label: 'o4 mini',
-    description: 'Reasoning-focused — often costly',
-  },
-  {
-    id: 'o3-mini',
-    label: 'o3-mini',
-    description: 'Reasoning — can be very expensive',
-  },
-];
-
-const ALLOWED_IDS = new Set(OPENAI_CHAT_MODEL_OPTIONS.map((o) => o.id));
+export const OPENAI_CHAT_MODEL_OPTIONS: readonly OpenAiChatModelOption[] = CHAT_MODELS.map(
+  (m) => ({ id: m.id, label: m.label, description: m.description }),
+);
 
 export function isAllowedChatModelId(id: string): boolean {
-  return ALLOWED_IDS.has(id);
+  return catalogIsKnown(id);
 }
 
 export function getEffectiveChatModel(project: { openaiChatModel: string | null }): string {
   const o = project.openaiChatModel?.trim();
-  if (o && isAllowedChatModelId(o)) return o;
+  if (o && catalogIsKnown(o)) return o;
   return DEFAULT_CHAT_MODEL_ID;
 }

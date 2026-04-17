@@ -14,7 +14,6 @@ import { ProjectRailQuickActions } from '@/features/projects/ProjectRailQuickAct
 import { ProjectWorkspaceRailBranding } from '@/features/projects/ProjectWorkspaceRailBranding';
 import { getProjectForUser, listProjectsForUser } from '@/features/projects/project-queries';
 import { DEFAULT_PLAN, parsePlanFromJson, type PlanPayload } from '@/shared/domain/plan';
-import { getEffectiveChatModel } from '@/shared/lib/openai-model';
 import { prisma } from '@/shared/lib/prisma';
 import { requireActiveUserId } from '@/shared/lib/session';
 
@@ -68,13 +67,15 @@ export default async function ProjectPage({
   ]);
 
   const plan = resolvePlanPayload(snapshot?.payload ?? null);
-  const effectiveChatModel = getEffectiveChatModel(project);
 
   const chatLines = messages.map((m) => ({
     id: m.id,
     role: m.role,
     content: m.content,
     attachments: m.attachments,
+    modelId: m.modelId,
+    contextProfile: m.contextProfile,
+    tokensUsed: m.tokensUsed,
   }));
 
   const taskCounts = await getCachedPhaseTaskCounts(project.id, phases);
@@ -122,9 +123,11 @@ export default async function ProjectPage({
 
           <section className="order-1 flex min-h-0 flex-1 flex-col lg:order-2 lg:h-full lg:min-h-0 lg:pr-6">
             <ProjectChatSection
-              activeModel={effectiveChatModel}
               initialMessages={chatLines}
+              modelPreset={project.modelPreset}
               phaseId={activePhaseId}
+              pinnedModelId={project.pinnedModelId}
+              projectId={project.id}
               projectSlug={project.slug}
             />
           </section>
