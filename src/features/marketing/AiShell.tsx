@@ -10,8 +10,10 @@ type AiShellProps = {
 };
 
 export function AiShell({ children, contentClassName, backdrop = 'none' }: AiShellProps) {
+  const surfaceClass =
+    backdrop === 'marketing' ? 'bg-black' : 'bg-workspace-canvas';
   return (
-    <div className="relative min-h-screen overflow-hidden bg-workspace-canvas text-neutral-200 antialiased">
+    <div className={`relative min-h-screen overflow-hidden ${surfaceClass} text-neutral-200 antialiased`}>
       {backdrop === 'marketing' ? <FibonacciMarketingBackdrop /> : null}
       <div className={`relative z-10 ${contentClassName}`}>{children}</div>
     </div>
