@@ -6,6 +6,7 @@ import {
   BitrixProjectSettingsDialog,
   type BitrixSettingsProject,
 } from '@/features/projects/BitrixProjectSettingsDialog';
+import { ProjectSettingsDialog } from '@/features/projects/ProjectSettingsDialog';
 import {
   DECOMPOSITION_LEVEL_DESCRIPTIONS,
   type PlanPayload,
@@ -77,6 +78,35 @@ function LinkIcon({ className }: { className?: string }) {
   );
 }
 
+function MemoryIcon({ className }: { className?: string }) {
+  return (
+    <svg aria-hidden className={className} fill="none" viewBox="0 0 24 24">
+      <path
+        className="stroke-current"
+        d="M9 3a3 3 0 00-3 3v.5A3.5 3.5 0 003 10v4a3.5 3.5 0 003 3.464V18a3 3 0 003 3h6a3 3 0 003-3v-.536A3.5 3.5 0 0021 14v-4a3.5 3.5 0 00-3-3.5V6a3 3 0 00-3-3H9zm0 4h6m-6 4h6m-6 4h4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+      />
+    </svg>
+  );
+}
+
+function SettingsIcon({ className }: { className?: string }) {
+  return (
+    <svg aria-hidden className={className} fill="none" viewBox="0 0 24 24">
+      <path
+        className="stroke-current"
+        d="M10.325 4.317a1.724 1.724 0 013.35 0c.181.79.86 1.396 1.689 1.5.83.105 1.617-.412 1.802-1.196M19.4 7.5c.79.18 1.396.86 1.5 1.69.105.83-.412 1.616-1.196 1.802m-1.196 4.012c.79.18 1.396.86 1.5 1.69.105.83-.412 1.616-1.196 1.802M16.5 19.4c-.18.79-.86 1.396-1.69 1.5-.83.105-1.616-.412-1.802-1.196M9.012 19.704c-.18.79-.86 1.396-1.69 1.5-.83.105-1.616-.412-1.802-1.196M4.6 16.5c-.79-.18-1.396-.86-1.5-1.69-.105-.83.412-1.616 1.196-1.802m1.196-4.012c-.79-.18-1.396-.86-1.5-1.69-.105-.83.412-1.616 1.196-1.802M7.5 4.6c.18-.79.86-1.396 1.69-1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+      />
+      <circle className="stroke-current" cx={12} cy={12} r={3} strokeWidth={1.5} />
+    </svg>
+  );
+}
+
 function AboutProjectBody({ plan, projectName }: { plan: PlanPayload; projectName: string }) {
   const showPlanTitle = Boolean(plan.project_title) && plan.project_title !== projectName;
 
@@ -130,15 +160,17 @@ function AboutProjectBody({ plan, projectName }: { plan: PlanPayload; projectNam
 }
 
 /**
- * Compact rail actions: project summary, placeholders, and Bitrix settings.
+ * Compact rail actions: project summary, placeholders, Bitrix settings, project settings.
  */
 export function ProjectRailQuickActions({
   projectName,
+  projectSlug,
   plan,
   bitrixProject,
   activePhaseId,
 }: {
   projectName: string;
+  projectSlug: string;
   plan: PlanPayload;
   bitrixProject: BitrixSettingsProject;
   activePhaseId: string | null;
@@ -147,6 +179,8 @@ export function ProjectRailQuickActions({
   const [rulesOpen, setRulesOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
   const [bitrixOpen, setBitrixOpen] = useState(false);
+  const [memoryOpen, setMemoryOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const bitrixOk = isBitrixProjectConnectionComplete(bitrixProject);
 
   return (
@@ -192,6 +226,23 @@ export function ProjectRailQuickActions({
             }`}
           />
         </button>
+        <button
+          className={SOFT_ACTION_BTN_CLASS}
+          onClick={() => setMemoryOpen(true)}
+          type="button"
+        >
+          <MemoryIcon className="h-3.5 w-3.5 shrink-0 text-neutral-500 group-hover:text-neutral-300" />
+          Memory
+        </button>
+        <button
+          aria-label="Project settings"
+          className={SOFT_ACTION_BTN_CLASS}
+          onClick={() => setSettingsOpen(true)}
+          type="button"
+        >
+          <SettingsIcon className="h-3.5 w-3.5 shrink-0 text-neutral-500 group-hover:text-neutral-300" />
+          Settings
+        </button>
       </div>
 
       <WorkspaceModal onClose={() => setAboutOpen(false)} open={aboutOpen} title="About">
@@ -206,11 +257,21 @@ export function ProjectRailQuickActions({
         <p className={`${WORKSPACE_BODY_CLASS} text-sm leading-relaxed`}>Coming soon.</p>
       </WorkspaceModal>
 
+      <WorkspaceModal onClose={() => setMemoryOpen(false)} open={memoryOpen} title="Memory">
+        <p className={`${WORKSPACE_BODY_CLASS} text-sm leading-relaxed`}>Coming soon.</p>
+      </WorkspaceModal>
+
       <BitrixProjectSettingsDialog
         activePhaseId={activePhaseId}
         onClose={() => setBitrixOpen(false)}
         open={bitrixOpen}
         project={bitrixProject}
+      />
+
+      <ProjectSettingsDialog
+        onClose={() => setSettingsOpen(false)}
+        open={settingsOpen}
+        projectSlug={projectSlug}
       />
     </>
   );

@@ -10,6 +10,8 @@ import { PROJECT_TASKS_CHAT_GRID_CLASS } from '@/features/projects/plan-tasks-la
 import { ProjectPlanTasksHost } from '@/features/projects/ProjectPlanTasksHost';
 import { buildPhaseRailOrder } from '@/features/phases/phase-rail-order';
 import { ProjectPlanMeta } from '@/features/projects/ProjectPlanMeta';
+import { ProjectRailQuickActions } from '@/features/projects/ProjectRailQuickActions';
+import { ProjectWorkspaceRailBranding } from '@/features/projects/ProjectWorkspaceRailBranding';
 import { getProjectForUser, listProjectsForUser } from '@/features/projects/project-queries';
 import { DEFAULT_PLAN, parsePlanFromJson, type PlanPayload } from '@/shared/domain/plan';
 import { getEffectiveChatModel } from '@/shared/lib/openai-model';
@@ -85,17 +87,10 @@ export default async function ProjectPage({
         projectSlug={project.slug}
       >
         <div className={PROJECT_TASKS_CHAT_GRID_CLASS}>
-          <aside className="order-2 flex min-h-0 flex-1 flex-col overflow-hidden bg-workspace-rail lg:order-1 lg:border-r lg:border-workspace-hairline lg:px-5">
+          <aside className="order-2 flex min-h-0 flex-1 flex-col overflow-hidden bg-workspace-rail pt-0 lg:order-1 lg:border-r lg:border-workspace-hairline lg:px-5">
+            <ProjectWorkspaceRailBranding />
             <ProjectPlanMeta
-              activePhaseId={activePhaseId}
               activeSlug={project.slug}
-              bitrixProject={{
-                id: project.id,
-                openaiChatModel: project.openaiChatModel,
-                bitrixProjectId: project.bitrixProjectId,
-                taskOwnerId: project.taskOwnerId,
-                taskAssigneeId: project.taskAssigneeId,
-              }}
               plan={plan}
               projectName={project.name}
               projects={projectOptions}
@@ -107,6 +102,21 @@ export default async function ProjectPage({
               projectSlug={project.slug}
               taskCounts={taskCounts}
             />
+            <div className="shrink-0 border-t border-workspace-hairline px-2 py-3">
+              <ProjectRailQuickActions
+                activePhaseId={activePhaseId}
+                bitrixProject={{
+                  id: project.id,
+                  openaiChatModel: project.openaiChatModel,
+                  bitrixProjectId: project.bitrixProjectId,
+                  taskOwnerId: project.taskOwnerId,
+                  taskAssigneeId: project.taskAssigneeId,
+                }}
+                plan={plan}
+                projectName={project.name}
+                projectSlug={project.slug}
+              />
+            </div>
           </aside>
 
           <section className="order-1 flex min-h-0 flex-1 flex-col lg:order-2 lg:h-full lg:min-h-0 lg:pr-6">

@@ -52,7 +52,7 @@
 | 3.4 | Rate limiting | Middleware (e.g. Upstash Ratelimit) or Vercel-friendly limiter | ⬜ | **Adaptive — align** |
 | 3.5 | API documentation | OpenAPI optional; internal MD in `docs/` | ⬜ | |
 | 3.6 | CRON | Only if needed (e.g. cleanup); Vercel Cron | ⬜ | |
-| 3.7 | File upload | Server Actions; size caps; text extraction for AI context | ⬜ | No R2 v1 unless files grow |
+| 3.7 | File upload | Project chat attachments via `multipart/form-data`; whitelist `.md/.txt/.json/.yaml/.yml`; size cap 1 MB; UTF-8 sniff; injected into LLM context per message | ✅ | Stored in Cloudflare R2 (see §6.1) |
 
 ---
 
@@ -90,7 +90,7 @@
 
 | # | Parameter | Decision | Status | Notes |
 |---|-----------|----------|--------|-------|
-| 6.1 | Object storage | None for v1 (generated MD/YAML streamed) | ✅ | R2 later if attachments |
+| 6.1 | Object storage | Cloudflare R2 (S3-compatible) for chat attachments. Env: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`. Key scheme: `projects/<projectId>/attachments/<attachmentId>/<safeFilename>` | ✅ | Use a separate bucket per environment |
 | 6.2 | CDN | Vercel | ✅ | |
 | 6.3 | Images | `next/image` if needed | ⬜ | |
 

@@ -92,4 +92,101 @@ body {
   .scrollbar-chat-composer-hidden::-webkit-scrollbar {
     display: none;
   }
+
+  /**
+   * Marketing / auth Fibonacci backdrop — glow sizes follow Fibonacci (233, 144 px).
+   */
+  .fib-backdrop-mesh {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgb(139 92 246 / 0.12), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 100% 100%, rgb(244 114 182 / 0.08), transparent 50%),
+      radial-gradient(ellipse 60% 45% at 0% 85%, rgb(167 139 250 / 0.06), transparent 45%);
+  }
+
+  .fib-orb-drift {
+    animation: fib-backdrop-drift 22s ease-in-out infinite;
+  }
+
+  .fib-orb-drift-delay {
+    animation-delay: 0s;
+  }
+
+  .fib-orb-drift-offset {
+    animation-delay: 2.5s;
+  }
+
+  .fib-spiral-slow {
+    animation: fib-spiral-rotate 140s linear infinite;
+    transform-origin: center;
+  }
+
+  .fib-spiral-delay-negative {
+    animation-delay: -40s;
+  }
+
+  .fib-grid-fade {
+    opacity: 0.35;
+    background-image:
+      linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+    background-size: 55px 55px;
+  }
+
+  .fib-orb-golden-a {
+    top: 38.197%;
+    left: 61.803%;
+  }
+
+  .fib-orb-golden-b {
+    bottom: 61.803%;
+    right: 38.197%;
+  }
+
+  .fib-orb-golden-c {
+    top: 12%;
+    left: 8%;
+  }
+
+  .fib-size-glow-lg {
+    width: 233px;
+    height: 233px;
+  }
+
+  .fib-size-glow-md-scaled {
+    width: 233px;
+    height: 233px;
+  }
+
+  .fib-size-glow-sm-scaled {
+    width: 144px;
+    height: 144px;
+  }
+}
+
+@keyframes fib-backdrop-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.88;
+  }
+  50% {
+    transform: translate(1.2%, -1.8%) scale(1.035);
+    opacity: 1;
+  }
+}
+
+@keyframes fib-spiral-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fib-orb-drift,
+  .fib-spiral-slow {
+    animation: none;
+  }
 }

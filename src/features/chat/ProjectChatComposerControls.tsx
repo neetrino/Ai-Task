@@ -45,14 +45,11 @@ export function SendOrStopControl({
 export function AssistantPendingRow({ pending }: { pending: boolean }) {
   if (!pending) return null;
   return (
-    <div className="text-sm leading-relaxed text-neutral-400">
-      <span className="mb-2 block text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
-        Assistant
-      </span>
+    <div className="text-[15px] leading-relaxed text-neutral-50">
       <span className="inline-flex items-center gap-2">
         <span
           aria-hidden
-          className="inline-block h-2 w-2 animate-pulse rounded-full bg-neutral-500"
+          className="inline-block h-2 w-2 animate-pulse rounded-full bg-neutral-400"
         />
         Updating plan…
       </span>
