@@ -57,9 +57,12 @@ function TrashOutlineIcon({ className }: { className?: string }) {
 export function PhaseRowMoreMenu({
   onRename,
   isRowEditing,
+  isActiveRow = false,
 }: {
   onRename: () => void;
   isRowEditing: boolean;
+  /** Solid violet phase row — lighten trigger for contrast. */
+  isActiveRow?: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -89,6 +92,10 @@ export function PhaseRowMoreMenu({
       ? 'opacity-100'
       : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100';
 
+  const triggerToneClass = isActiveRow
+    ? 'text-white/75 hover:bg-white/15 hover:text-white focus-visible:ring-white/40'
+    : 'text-neutral-400 hover:bg-white/[0.08] hover:text-neutral-200 focus-visible:ring-violet-500/35';
+
   return (
     <div className="relative shrink-0" ref={wrapRef}>
       <button
@@ -96,7 +103,7 @@ export function PhaseRowMoreMenu({
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         aria-label="Phase options"
-        className={`rounded-md p-1 text-neutral-400 transition hover:bg-white/[0.08] hover:text-neutral-200 focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-violet-500/35 ${dotsVisible}`}
+        className={`rounded-md p-1 transition focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 ${triggerToneClass} ${dotsVisible}`}
         onClick={() => setMenuOpen((v) => !v)}
         type="button"
       >

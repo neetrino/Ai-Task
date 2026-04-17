@@ -1,3 +1,5 @@
+import { WORKSPACE_CHAT_SEND_BTN_CLASS } from '@/shared/ui/workspace-ui';
+
 export function SendOrStopControl({
   pending,
   onStop,
@@ -26,7 +28,7 @@ export function SendOrStopControl({
   return (
     <button
       aria-label="Send message"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-900 transition hover:bg-white disabled:opacity-50"
+      className={`flex h-9 w-9 shrink-0 items-center justify-center ${WORKSPACE_CHAT_SEND_BTN_CLASS}`}
       type="submit"
     >
       <svg aria-hidden className="h-5 w-5" fill="none" viewBox="0 0 24 24">

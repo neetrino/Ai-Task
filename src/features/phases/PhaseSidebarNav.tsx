@@ -14,25 +14,28 @@ import { ALL_TASKS_PANEL_QUERY_KEY, buildProjectPageHref } from '@/features/proj
 import { useProjectPlanTasks } from '@/features/projects/project-plan-tasks-context';
 import { ListChecksGlyph } from '@/shared/ui/brand-icons';
 
-/** Softer than heavy borders: shift in background (ChatGPT-style thread list). */
+/** Active row: flat solid violet — same family as Create project (`PROJECTS_CREATE_BTN_CLASS`), no shadows. */
 /** py-0 so the row height is driven by the Tasks button, matching its outline thickness. */
 const PHASE_ROW_WRAP_ACTIVE =
-  'rounded-xl border border-white/[0.08] bg-workspace-elevated px-2 py-0 shadow-none';
+  'rounded-xl border-0 bg-violet-600 px-2 py-0 shadow-none outline-none transition';
 const PHASE_ROW_WRAP_IDLE =
   'rounded-xl border border-transparent px-2 py-0 transition hover:bg-white/[0.04]';
 
-const LINK_ACTIVE = 'font-medium text-neutral-50';
+const LINK_ACTIVE = 'font-medium text-white';
 const LINK_IDLE = 'font-medium text-neutral-200 hover:text-neutral-50';
 
 /** Inline rename: dark bar, native text selection (blue highlight) on focus */
 const PHASE_LABEL_INPUT_CLASS =
   'min-w-0 flex-1 rounded-lg border border-white/[0.12] bg-neutral-800/95 px-2 py-0.5 text-left text-sm font-medium leading-snug text-neutral-100 shadow-none outline-none ring-1 ring-blue-500/35 focus:border-white/[0.18] focus:ring-blue-500/50';
 
-function tasksButtonClass(isTasksPanelOpen: boolean): string {
+function tasksButtonClass(isTasksPanelOpen: boolean, isRowActive: boolean): string {
   const base =
     'flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20';
   if (isTasksPanelOpen) {
     return `${base} border-violet-500/40 bg-violet-600 text-white shadow-sm hover:bg-violet-500`;
+  }
+  if (isRowActive) {
+    return `${base} border-white/25 bg-white/10 text-white hover:bg-white/15`;
   }
   return `${base} border-transparent bg-transparent text-neutral-300 hover:border-white/15 hover:bg-neutral-900 hover:text-neutral-100`;
 }
@@ -127,14 +130,20 @@ function PhaseChatRow({
         <button
           aria-label={tasksAriaLabel}
           aria-pressed={isTasksPanelOpen}
-          className={tasksButtonClass(isTasksPanelOpen)}
+          className={tasksButtonClass(isTasksPanelOpen, isActive)}
           onClick={() => onOpenTasks()}
           title={tasksTitle}
           type="button"
           {...{ [TASK_LIST_TOGGLE_DATA_KEY]: '' }}
         >
           <ListChecksGlyph className="h-4 w-4 shrink-0 opacity-90" />
-          <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-md bg-neutral-950 px-1 text-[10px] font-bold tabular-nums text-neutral-200 ring-1 ring-white/10">
+          <span
+            className={`flex h-5 min-w-[1.25rem] items-center justify-center rounded-md px-1 text-[10px] font-bold tabular-nums ring-1 ${
+              isActive && !isTasksPanelOpen
+                ? 'bg-black/25 text-white ring-white/25'
+                : 'bg-neutral-950 text-neutral-200 ring-white/10'
+            }`}
+          >
             {taskCount}
           </span>
         </button>
@@ -245,6 +254,7 @@ export function PhaseSidebarNav({
                 }}
                 phaseMenu={
                   <PhaseRowMoreMenu
+                    isActiveRow={activePhaseId === p.id}
                     isRowEditing={isEditingThis}
                     onRename={() => {
                       setDraftLabel(p.label);

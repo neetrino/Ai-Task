@@ -20,6 +20,10 @@ export const WORKSPACE_PRIMARY_BTN_CLASS =
 export const WORKSPACE_ACCENT_BTN_CLASS =
   'rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-violet-500 disabled:opacity-60';
 
+/** Chat composer send — same violet + 3D specular as Create project (`WorkspaceProjectsSection`), circular control. */
+export const WORKSPACE_CHAT_SEND_BTN_CLASS =
+  'rounded-full border-0 bg-violet-600 text-white shadow-[0_8px_20px_-8px_rgba(91,33,182,0.55),0_4px_10px_-6px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.2)] transition hover:bg-violet-500 hover:shadow-[0_10px_24px_-8px_rgba(91,33,182,0.5),inset_0_1px_0_0_rgba(255,255,255,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50 disabled:opacity-50';
+
 export const WORKSPACE_GHOST_BTN_CLASS =
   'rounded-lg border border-white/10 bg-neutral-800/80 px-3 py-1.5 text-sm text-neutral-200 transition hover:border-white/15 hover:bg-neutral-800 disabled:opacity-60';
 
