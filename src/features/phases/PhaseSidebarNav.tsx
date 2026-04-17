@@ -32,8 +32,8 @@ function tasksButtonClass(isTasksPanelOpen: boolean, isRowActive: boolean): stri
   const base =
     'flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2';
   if (isTasksPanelOpen && isRowActive) {
-    // Open on solid violet row: inverted chip so it does not merge with row fill.
-    return `${base} border-white/20 bg-white text-violet-800 shadow-sm hover:bg-violet-50 focus-visible:ring-white/50`;
+    // Open on solid violet row: dark chip so it does not merge with row fill.
+    return `${base} border-white/20 bg-neutral-950 text-white shadow-sm hover:border-white/30 hover:bg-neutral-900 focus-visible:ring-white/40`;
   }
   if (isTasksPanelOpen) {
     return `${base} border-violet-500/40 bg-violet-600 text-white shadow-sm hover:bg-violet-500 focus-visible:ring-violet-300/50`;
@@ -49,7 +49,7 @@ function tasksCountBadgeClass(isRowActive: boolean, isTasksPanelOpen: boolean): 
   const base =
     'flex h-5 min-w-[1.25rem] items-center justify-center rounded-md px-1 text-[10px] font-bold tabular-nums ring-1';
   if (isTasksPanelOpen && isRowActive) {
-    return `${base} bg-violet-200/90 text-violet-900 ring-violet-300/80`;
+    return `${base} bg-white/15 text-white ring-white/25`;
   }
   if (isTasksPanelOpen) {
     return `${base} bg-white/12 text-white ring-white/20`;
