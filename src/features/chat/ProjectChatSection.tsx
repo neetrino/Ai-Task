@@ -521,12 +521,6 @@ function ProjectChatSectionImpl({
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-5 pt-6">
         <div className={`pointer-events-auto w-full ${CHAT_CONTENT_MAX}`}>
           <div className="flex w-full min-w-0 items-end gap-2">
-            <div className="hidden shrink-0 pb-1 sm:block">
-              <UpdatePlanToggle
-                armed={planIntentArmed}
-                onToggle={() => setPlanIntentArmed((v) => !v)}
-              />
-            </div>
             <div className="flex w-full min-w-0 flex-col gap-2 rounded-[1.75rem] bg-workspace-elevated px-2 py-3.5 shadow-[0_2px_6px_rgba(0,0,0,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]">
               {attachments.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5 px-1.5 pt-1">
@@ -567,7 +561,7 @@ function ProjectChatSectionImpl({
                     />
                   </svg>
                 </button>
-                <div className="shrink-0 sm:hidden">
+                <div className="-ml-5 shrink-0">
                   <UpdatePlanToggle
                     armed={planIntentArmed}
                     onToggle={() => setPlanIntentArmed((v) => !v)}
