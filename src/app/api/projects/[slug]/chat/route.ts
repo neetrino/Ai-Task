@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { ATTACHMENT_MAX_PER_MESSAGE } from '@/features/attachments/attachment-rules';
 import { runProjectChatTurn } from '@/features/chat/project-chat-turn';
 import { prisma } from '@/shared/lib/prisma';
 import { requireActiveUserForApi } from '@/shared/lib/session';
@@ -9,6 +10,7 @@ const CHAT_MESSAGE_MAX_LEN = 100_000;
 const chatPostBodySchema = z.object({
   message: z.string().max(CHAT_MESSAGE_MAX_LEN),
   phaseId: z.union([z.string().min(1), z.null()]).optional(),
+  attachmentIds: z.array(z.string().min(1)).max(ATTACHMENT_MAX_PER_MESSAGE).optional(),
 });
 
 function httpStatusForChatError(error: string): number {
@@ -62,6 +64,7 @@ export async function POST(
     message: composed,
     signal: req.signal,
     project,
+    attachmentIds: parsed.data.attachmentIds,
   });
 
   if (result && 'cancelled' in result) {

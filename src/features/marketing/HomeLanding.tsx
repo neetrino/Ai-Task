@@ -16,7 +16,7 @@ const PREVIEW_TASKS = [
 
 function TaskPreviewPanel() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-workspace-elevated shadow-none">
+    <div className="overflow-hidden rounded-2xl border border-white/[0.1] bg-workspace-elevated/95 shadow-[0_0_0_1px_rgb(255_255_255/0.04),0_24px_80px_-24px_rgb(139_92_246/0.18)] ring-1 ring-violet-500/10 backdrop-blur-sm">
       <div className="border-b border-workspace-hairline bg-workspace-canvas px-5 py-4">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-neutral-300">
           <SparklesGlyph className="h-4 w-4 text-neutral-400" />
@@ -65,14 +65,23 @@ export function HomeLanding({ variant }: HomeLandingProps) {
     variant === 'signed_out' ? 'Sign in' : variant === 'active' ? 'Open workspace' : 'Access status';
 
   return (
-    <AiShell contentClassName="mx-auto flex min-h-screen max-w-6xl flex-col justify-center gap-14 px-6 py-16 lg:gap-16">
+    <AiShell
+      backdrop="marketing"
+      contentClassName="mx-auto flex min-h-screen max-w-6xl flex-col justify-center gap-14 px-6 py-16 lg:gap-[4.5rem]"
+    >
       <section className="flex flex-col items-center text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-workspace-elevated px-3 py-1 text-xs font-medium text-neutral-300">
+        <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-workspace-elevated/90 px-3.5 py-1.5 text-xs font-medium text-neutral-200 shadow-[0_0_48px_-12px_rgb(139_92_246/0.45)] backdrop-blur-md">
           <SiteLogoImage className="h-3.5 w-auto" heightPx={14} priority />
-          Aibonacci · each step builds on the last
+          <span className="bg-gradient-to-r from-violet-200 via-fuchsia-200 to-violet-300 bg-clip-text text-transparent">
+            Aibonacci
+          </span>
+          <span className="text-neutral-400">· each step builds on the last</span>
         </div>
-        <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-neutral-100 sm:text-5xl sm:leading-[1.1]">
-          Ideas become <span className="text-neutral-400">actionable tasks</span>
+        <h1 className="mt-7 max-w-3xl text-4xl font-semibold tracking-tight text-neutral-100 sm:text-5xl sm:leading-[1.08]">
+          Ideas become{' '}
+          <span className="bg-gradient-to-r from-violet-200 via-fuchsia-200 to-violet-300 bg-clip-text text-transparent">
+            actionable tasks
+          </span>
           —fast.
         </h1>
         <p className="mt-5 max-w-2xl text-lg leading-relaxed text-neutral-400">
@@ -87,8 +96,8 @@ export function HomeLanding({ variant }: HomeLandingProps) {
         </div>
       </section>
 
-      <section className="flex flex-col items-stretch gap-12 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
-        <div className="grid w-full max-w-xl grid-cols-1 gap-8 sm:grid-cols-3 lg:max-w-none">
+      <section className="flex flex-col items-stretch gap-12 lg:flex-row lg:items-start lg:justify-between lg:gap-20">
+        <div className="grid w-full max-w-xl grid-cols-1 gap-10 sm:grid-cols-3 lg:max-w-none">
           <FeatureStat label="Natural input" value="Briefs & chat" />
           <FeatureStat label="Structured output" value="Tasks & phases" />
           <FeatureStat label="Integrations" value="MD & Bitrix24" />
@@ -103,9 +112,9 @@ export function HomeLanding({ variant }: HomeLandingProps) {
 
 function FeatureStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="text-center lg:text-left">
+    <div className="rounded-xl border border-white/[0.07] bg-workspace-elevated/35 px-4 py-3.5 text-center shadow-[inset_0_1px_0_0_rgb(255_255_255/0.04)] backdrop-blur-sm lg:text-left">
       <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">{label}</div>
-      <div className="mt-1 text-sm font-medium text-neutral-300">{value}</div>
+      <div className="mt-1.5 text-sm font-medium text-neutral-200">{value}</div>
     </div>
   );
 }

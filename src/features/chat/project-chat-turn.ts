@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { APIUserAbortError } from 'openai/error';
+import { composeUserMessageWithAttachments } from '@/features/attachments/attachment-context';
 import { CHAT_MODEL_HISTORY_LIMIT } from '@/features/chat/chat-limits';
 import { PLAN_SYSTEM_PROMPT } from '@/features/chat/prompts';
 import { normalizePlanFromAi, type PlanPayload } from '@/shared/domain/plan';
@@ -33,6 +34,8 @@ export type RunProjectChatTurnParams = {
    * ownership by slug). Falls back to an id/ownerId lookup when omitted.
    */
   project?: ProjectForChatModel;
+  /** Attachment ids previously uploaded for this turn; embedded into the user message. */
+  attachmentIds?: string[];
 };
 
 type PlanSnapshotRow = { version: number; payload: unknown } | null;
@@ -160,7 +163,14 @@ type PreflightOk = {
 async function runChatPreflight(
   params: RunProjectChatTurnParams,
 ): Promise<{ error: string } | PreflightOk> {
-  const { userId, projectId, phaseId, message, project: preloadedProject } = params;
+  const {
+    userId,
+    projectId,
+    phaseId,
+    message,
+    project: preloadedProject,
+    attachmentIds,
+  } = params;
   const composed = message.trim();
 
   if (!composed) {
@@ -194,14 +204,30 @@ async function runChatPreflight(
     }
   }
 
-  await prisma.message.create({
+  const { composedContent, resolvedAttachmentIds } = await composeUserMessageWithAttachments({
+    projectId,
+    attachmentIds: attachmentIds ?? [],
+    message: composed,
+  });
+
+  const userMessage = await prisma.message.create({
     data: {
       projectId,
       phaseId,
       role: 'user',
-      content: composed,
+      content: composedContent,
     },
+    select: { id: true },
   });
+
+  if (resolvedAttachmentIds.length > 0) {
+    // Link attachments to the persisted message so the Files panel can show
+    // "sent in message X". Done after create so we have the message id.
+    await prisma.projectAttachment.updateMany({
+      where: { id: { in: resolvedAttachmentIds }, projectId },
+      data: { messageId: userMessage.id },
+    });
+  }
 
   const now = new Date();
   if (phaseId) {

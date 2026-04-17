@@ -15,16 +15,17 @@ enum AccessStatus {
 }
 
 model User {
-  id            String        @id @default(cuid())
+  id            String              @id @default(cuid())
   name          String?
-  email         String?       @unique
+  email         String?             @unique
   emailVerified DateTime?
   image         String?
   /// New signups are PENDING until an operator sets ACTIVE in the database.
-  accessStatus  AccessStatus  @default(PENDING)
+  accessStatus  AccessStatus        @default(PENDING)
   accounts      Account[]
   sessions      Session[]
   projects      Project[]
+  attachments   ProjectAttachment[]
 }
 
 model Account {
@@ -66,43 +67,45 @@ model VerificationToken {
 }
 
 model Project {
-  id               String   @id @default(cuid())
-  name             String
-  slug             String   @unique
-  ownerId          String
+  id                  String   @id @default(cuid())
+  name                String
+  slug                String   @unique
+  ownerId             String
   /// When null or unknown, app uses default gpt-4o-mini (see OPENAI_CHAT_MODEL_OPTIONS in code).
-  openaiChatModel  String?
-  bitrixProjectId  String?
-  taskOwnerId      String?
-  taskAssigneeId   String?
+  openaiChatModel     String?
+  bitrixProjectId     String?
+  taskOwnerId         String?
+  taskAssigneeId      String?
   /// When true, real (non–dry-run) Bitrix sync is blocked until the user clears the checkbox in the Bitrix panel.
-  bitrixSyncCompleted Boolean @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  bitrixSyncCompleted Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
   /// Last time the user was active in Main (no phase); drives sidebar order vs phases.
-  mainLastUsedAt   DateTime @default(now())
+  mainLastUsedAt      DateTime @default(now())
 
-  owner        User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  phases       Phase[]
-  messages     Message[]
+  owner         User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  phases        Phase[]
+  messages      Message[]
   planSnapshots PlanSnapshot[]
+  attachments   ProjectAttachment[]
 
   @@index([ownerId])
   @@index([ownerId, updatedAt])
 }
 
 model Phase {
-  id        String   @id @default(cuid())
-  projectId String
-  label     String
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  projectId  String
+  label      String
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
   /// Last activity in this phase (messages, navigation, or creation); drives sidebar order.
   lastUsedAt DateTime @default(now())
 
-  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project       Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
   messages      Message[]
   planSnapshots PlanSnapshot[]
+  attachments   ProjectAttachment[]
 
   @@index([projectId])
   @@index([projectId, sortOrder])
@@ -122,8 +125,9 @@ model Message {
   content   String      @db.Text
   createdAt DateTime    @default(now())
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  phase   Phase?  @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  project     Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase       Phase?              @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  attachments ProjectAttachment[]
 
   @@index([projectId, createdAt])
   @@index([phaseId])
@@ -144,4 +148,37 @@ model PlanSnapshot {
   @@index([projectId])
   @@index([phaseId])
   @@index([projectId, phaseId, updatedAt])
+}
+
+enum AttachmentFormat {
+  md
+  txt
+  json
+  yaml
+}
+
+model ProjectAttachment {
+  id           String           @id @default(cuid())
+  projectId    String
+  phaseId      String?
+  /// Linked once the message that references this attachment is persisted; null while in-flight.
+  messageId    String?
+  uploadedById String
+  filename     String
+  format       AttachmentFormat
+  sizeBytes    Int
+  /// Stable object key in R2; unique to enable safe re-uploads and idempotent deletes.
+  r2Key        String           @unique
+  /// SHA-256 of the original bytes; useful for de-duplication and integrity checks.
+  sha256       String
+  createdAt    DateTime         @default(now())
+
+  project  Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase    Phase?   @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  message  Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  uploader User     @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@index([projectId, createdAt])
+  @@index([messageId])
+  @@index([projectId, format])
 }

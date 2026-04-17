@@ -21,8 +21,8 @@ const PHASE_ROW_WRAP_ACTIVE =
 const PHASE_ROW_WRAP_IDLE =
   'rounded-xl border border-transparent px-2 py-0 transition hover:bg-white/[0.04]';
 
-const LINK_ACTIVE = 'font-medium text-neutral-100';
-const LINK_IDLE = 'font-medium text-neutral-400 hover:text-neutral-200';
+const LINK_ACTIVE = 'font-medium text-neutral-50';
+const LINK_IDLE = 'font-medium text-neutral-200 hover:text-neutral-50';
 
 /** Inline rename: dark bar, native text selection (blue highlight) on focus */
 const PHASE_LABEL_INPUT_CLASS =

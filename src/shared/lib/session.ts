@@ -10,6 +10,15 @@ import { redirect } from 'next/navigation';
  */
 export const getSession = cache(authRaw);
 
+/** Header / rail: short label for the signed-in user. */
+export function accountDisplayLabel(user: {
+  name?: string | null;
+  email?: string | null;
+} | null | undefined): string {
+  if (!user) return 'Account';
+  return user.name?.trim() || user.email?.split('@')[0]?.trim() || 'Account';
+}
+
 export async function requireActiveUserId(): Promise<string> {
   const session = await getSession();
   const id = session?.user?.id;
