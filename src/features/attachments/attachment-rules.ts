@@ -78,6 +78,10 @@ const BINARY_SNIFF_WINDOW = 4096;
 /**
  * Rejects obvious binary blobs by scanning the first 4 KB for NUL bytes — UTF-8
  * text never contains them, while images/exes/archives almost always do.
+ *
+ * The strict UTF-8 decode runs in `stream: true` mode so a multi-byte codepoint
+ * straddling the sniff-window boundary (common for non-ASCII `.md` files larger
+ * than 4 KB) is treated as a buffered partial sequence rather than a hard error.
  */
 export function isLikelyTextBytes(bytes: Uint8Array): boolean {
   const limit = Math.min(bytes.length, BINARY_SNIFF_WINDOW);
@@ -85,7 +89,7 @@ export function isLikelyTextBytes(bytes: Uint8Array): boolean {
     if (bytes[i] === 0) return false;
   }
   try {
-    new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(0, limit));
+    new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(0, limit), { stream: true });
     return true;
   } catch {
     return false;

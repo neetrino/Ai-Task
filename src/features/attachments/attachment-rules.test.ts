@@ -57,6 +57,18 @@ describe('isLikelyTextBytes', () => {
     const bytes = new Uint8Array([72, 105, 0, 33]);
     expect(isLikelyTextBytes(bytes)).toBe(false);
   });
+
+  it('accepts UTF-8 when a multi-byte codepoint straddles the 4 KB sniff window', () => {
+    // 4095 ASCII bytes followed by a 2-byte cyrillic char ("Я" = 0xD0 0xAF).
+    // The sniff window cuts between 0xD0 and 0xAF; strict (non-stream) decode
+    // would throw "invalid utf-8" and falsely flag the file as binary.
+    const head = new Uint8Array(4095).fill(0x61);
+    const bytes = new Uint8Array(head.length + 2);
+    bytes.set(head, 0);
+    bytes[4095] = 0xd0;
+    bytes[4096] = 0xaf;
+    expect(isLikelyTextBytes(bytes)).toBe(true);
+  });
 });
 
 describe('validateAttachmentBytes', () => {
