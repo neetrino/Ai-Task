@@ -11,6 +11,7 @@
 import { logger } from '@/shared/lib/logger';
 import { getOpenAI } from '@/shared/lib/openai';
 import type { ContextProfileId } from '@/features/chat/profiles';
+import { IMPERATIVE_MARKERS_PATTERN } from './context-profile';
 import {
   getRouterCache,
   makeRouterCacheKey,
@@ -25,6 +26,16 @@ const SYSTEM_PROMPT = [
   '- "plan": user wants to create / update a backlog of tasks, epics, or a structured plan.',
   '- "doc": user is asking about an attached document.',
   '- "lite": casual chat, short question, greeting, status update, anything else.',
+  '',
+  'Messages may be in English, Russian (Cyrillic OR Latin transliteration), or Armenian (Armenian script OR Latin transliteration). Treat transliteration as the original language.',
+  'Examples of "plan" intent:',
+  '- "create tasks for auth", "let\'s draft a backlog", "split this into steps".',
+  '- "сделай задачи по этому", "накидай план на неделю", "разбей на этапы".',
+  '- "sdelay zadachi po etomu", "nakidai plan na nedelyu", "obnovi plan".',
+  '- "սարքիր առաջադրանքներ", "կազմիր պլան".',
+  '- "sarkir arajadrankner", "kazmir plan".',
+  'Examples of "lite": "привет", "spasibo", "ok cool", "what time is it?".',
+  '',
   'Respond with a JSON object: {"profile":"plan"|"doc"|"lite","confidence":0..1}.',
   'Default to "lite" when unsure.',
 ].join('\n');
@@ -32,8 +43,13 @@ const SYSTEM_PROMPT = [
 /**
  * Heuristic gate: if the deterministic detector is confident enough we skip
  * the LLM call entirely. We only ask the classifier when the deterministic
- * answer is `lite` AND the message looks substantial (long, has bullet
- * lines, or a lot of code-ish punctuation).
+ * answer is `lite` AND the message either:
+ *   - contains an imperative / command marker (cheap to recognise even when
+ *     the user uses Latin transliteration of Russian/Armenian we can't catch
+ *     with the keyword regex), OR
+ *   - is long enough (> 60 chars) to plausibly carry planning intent.
+ *
+ * Pure greetings and acknowledgements (< 15 chars trimmed) never trigger.
  */
 export function shouldUseLlmClassifier(input: {
   deterministicProfile: ContextProfileId;
@@ -42,12 +58,10 @@ export function shouldUseLlmClassifier(input: {
 }): boolean {
   if (input.deterministicProfile !== 'lite') return false;
   if (input.attachmentCount > 0) return false;
-  const len = input.message.length;
-  if (len < 200) return false;
-  const bulletCount = (input.message.match(/^\s*[-*•]\s/gm) ?? []).length;
-  const punctRatio =
-    (input.message.match(/[{}[\]<>;:]/g) ?? []).length / Math.max(1, len);
-  return bulletCount >= 3 || punctRatio > 0.04 || len > 600;
+  const trimmed = input.message.trim();
+  if (trimmed.length < 15) return false;
+  if (IMPERATIVE_MARKERS_PATTERN.test(trimmed)) return true;
+  return trimmed.length > 60;
 }
 
 type ClassifierOutput = {

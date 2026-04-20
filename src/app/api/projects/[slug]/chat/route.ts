@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ATTACHMENT_MAX_PER_MESSAGE } from '@/features/attachments/attachment-rules';
 import {
   detectContextProfile,
+  IMPERATIVE_MARKERS_PATTERN,
   stripPlanCommand,
 } from '@/features/ai-router/context-profile';
 import {
@@ -103,11 +104,23 @@ export async function POST(
       message: cleanedMessage,
       attachmentCount,
     });
-    if (classified && classified.profile !== 'lite' && classified.confidence >= 0.6) {
-      profileDecision = {
-        profile: classified.profile,
-        reason: classified.profile === 'plan' ? 'plan-keyword' : 'has-attachments',
-      };
+    if (classified && classified.profile !== 'lite') {
+      // For `plan`, accept a slightly lower confidence when the message
+      // contains an imperative marker — short transliterated commands like
+      // `sdelay zadachi` are easy to under-rate but clearly intentional.
+      // `doc` always requires the standard 0.6 bar.
+      const hasMarker = IMPERATIVE_MARKERS_PATTERN.test(cleanedMessage);
+      const planThreshold = hasMarker ? 0.5 : 0.6;
+      const accept =
+        classified.profile === 'plan'
+          ? classified.confidence >= planThreshold
+          : classified.confidence >= 0.6;
+      if (accept) {
+        profileDecision = {
+          profile: classified.profile,
+          reason: classified.profile === 'plan' ? 'plan-keyword' : 'has-attachments',
+        };
+      }
     }
   }
 
