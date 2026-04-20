@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 import { toast } from 'sonner';
+import { DeleteProjectDialog } from '@/features/projects/DeleteProjectDialog';
 import { renameProject } from '@/features/projects/project-actions';
-import { PencilOutlineGlyph } from '@/shared/ui/brand-icons';
+import { PencilOutlineGlyph, TrashOutlineGlyph } from '@/shared/ui/brand-icons';
 import {
   WORKSPACE_ACCENT_BTN_CLASS,
   WORKSPACE_FIELD_CLASS,
@@ -15,6 +16,9 @@ import {
 
 const RENAME_ICON_BTN_CLASS =
   'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 text-neutral-400 transition group-hover:border-white/20 group-hover:bg-white/[0.07] group-hover:text-neutral-200 hover:border-white/15 hover:bg-white/[0.06] hover:text-neutral-200 disabled:pointer-events-none disabled:opacity-60';
+
+const DELETE_ICON_BTN_CLASS =
+  'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 text-neutral-400 transition group-hover:border-white/20 group-hover:bg-white/[0.07] hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300 disabled:pointer-events-none disabled:opacity-60';
 
 export type ProjectListRow = {
   id: string;
@@ -30,6 +34,7 @@ export function WorkspaceProjectListRow({ project }: WorkspaceProjectListRowProp
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(project.name);
   const [isPending, startTransition] = useTransition();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => {
     if (!editing) {
@@ -131,20 +136,41 @@ export function WorkspaceProjectListRow({ project }: WorkspaceProjectListRowProp
             {project.updatedAt.slice(0, 10)}
           </span>
         </div>
-        <button
-          aria-label={`Rename project ${project.name}`}
-          className={`relative z-[2] self-start sm:self-center ${RENAME_ICON_BTN_CLASS}`}
-          disabled={isPending}
-          onClick={(e) => {
-            e.preventDefault();
-            setDraft(project.name);
-            setEditing(true);
-          }}
-          type="button"
-        >
-          <PencilOutlineGlyph className="h-4 w-4" />
-        </button>
+        <div className="relative z-[2] flex shrink-0 items-center gap-2 self-start sm:self-center">
+          <button
+            aria-label={`Rename project ${project.name}`}
+            className={RENAME_ICON_BTN_CLASS}
+            disabled={isPending}
+            onClick={(e) => {
+              e.preventDefault();
+              setDraft(project.name);
+              setEditing(true);
+            }}
+            type="button"
+          >
+            <PencilOutlineGlyph className="h-4 w-4" />
+          </button>
+          <button
+            aria-label={`Delete project ${project.name}`}
+            className={DELETE_ICON_BTN_CLASS}
+            disabled={isPending}
+            onClick={(e) => {
+              e.preventDefault();
+              setDeleteOpen(true);
+            }}
+            type="button"
+          >
+            <TrashOutlineGlyph className="h-4 w-4" />
+          </button>
+        </div>
       </div>
+      <DeleteProjectDialog
+        onClose={() => setDeleteOpen(false)}
+        onDeleted={() => router.refresh()}
+        open={deleteOpen}
+        projectId={project.id}
+        projectName={project.name}
+      />
     </>
   );
 }

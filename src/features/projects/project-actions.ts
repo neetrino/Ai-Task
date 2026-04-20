@@ -5,6 +5,7 @@ import { revalidateProjectData } from '@/shared/lib/project-cache-tags';
 import { z } from 'zod';
 import { logger } from '@/shared/lib/logger';
 import { prisma } from '@/shared/lib/prisma';
+import { deleteAttachmentObject } from '@/shared/lib/r2';
 import { requireActiveUserId } from '@/shared/lib/session';
 import { slugify } from '@/shared/lib/slug';
 
@@ -109,6 +110,60 @@ export async function updateProjectBitrix(projectId: string, formData: FormData)
   });
   revalidatePath(`/app/projects/${project.slug}`);
   revalidateProjectData(projectId);
+}
+
+export type DeleteProjectState = { error: string } | { success: true };
+
+/**
+ * Permanently deletes a project and all associated rows (phases, messages,
+ * plan snapshots, attachments, token usage events) via Prisma cascade.
+ * Object-storage cleanup is best-effort — R2 failures are logged but do not
+ * block deletion, since orphaned objects are tolerable but a half-deleted
+ * project would corrupt the workspace state.
+ *
+ * Strong confirmation: caller must pass the exact project name (after trim).
+ */
+export async function deleteProject(
+  projectId: string,
+  confirmName: string,
+): Promise<DeleteProjectState> {
+  const userId = await requireActiveUserId();
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, ownerId: userId },
+    select: { id: true, name: true, slug: true },
+  });
+  if (!project) {
+    logger.warn({ projectId }, 'deleteProject: project not found');
+    return { error: 'Project not found.' };
+  }
+  if (typeof confirmName !== 'string' || confirmName.trim() !== project.name) {
+    logger.warn({ projectId }, 'deleteProject: confirmation name mismatch');
+    return { error: 'Confirmation name does not match the project name.' };
+  }
+
+  const attachments = await prisma.projectAttachment.findMany({
+    where: { projectId },
+    select: { r2Key: true },
+  });
+  if (attachments.length > 0) {
+    const results = await Promise.allSettled(
+      attachments.map((a) => deleteAttachmentObject(a.r2Key)),
+    );
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (failed > 0) {
+      logger.warn(
+        { projectId, failed, total: attachments.length },
+        'deleteProject: some R2 objects failed to delete; continuing',
+      );
+    }
+  }
+
+  await prisma.project.delete({ where: { id: project.id } });
+
+  revalidateProjectData(project.id);
+  revalidatePath('/app');
+  revalidatePath(`/app/projects/${project.slug}`);
+  return { success: true };
 }
 
 function emptyToNull(v: FormDataEntryValue | null): string | null | undefined {
